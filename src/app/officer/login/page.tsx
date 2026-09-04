@@ -1,61 +1,36 @@
-import Link from "next/link";
+"use client";
+
+import { LockKey } from "@phosphor-icons/react";
+import { useRouter } from "next/navigation";
+import { FormEvent, useState } from "react";
 
 export default function OfficerLoginPage() {
+  const router = useRouter();
+  const [mandi, setMandi] = useState("आज़ादपुर मंडी");
+
+  function handleLogin(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    window.localStorage.setItem("officer-authenticated", "true");
+    router.push("/officer/dashboard");
+  }
+
   return (
-    <div className="portal-page">
-      <div className="portal-shell" style={{ maxWidth: 760 }}>
-        <header className="portal-header">
-          <div>
-            <p className="muted">Officer Access</p>
-            <h1 className="portal-title">मंडी अधिकारी लॉगिन</h1>
-          </div>
-          <Link href="/" className="btn-secondary">
-            Home
-          </Link>
-        </header>
-
-        <main className="panel-card">
-          <div className="card-header">
-            <h2>सुरक्षित प्रवेश</h2>
-            <span className="status-pill">Verified gateway</span>
-          </div>
-
-          <div className="form-grid">
-            <div className="field" style={{ gridColumn: "1 / -1" }}>
-              <label htmlFor="officerId">Officer ID</label>
-              <input id="officerId" defaultValue="OFF-26032-04" />
-            </div>
-
-            <div className="field" style={{ gridColumn: "1 / -1" }}>
-              <label htmlFor="password">Password</label>
-              <input id="password" type="password" defaultValue="••••••••" />
-            </div>
-
-            <div className="field">
-              <label htmlFor="mandiCode">Mandi Code</label>
-              <input id="mandiCode" defaultValue="AZD-014" />
-            </div>
-
-            <div className="field">
-              <label htmlFor="region">Region</label>
-              <select id="region" defaultValue="nashik">
-                <option value="nashik">नाशिक</option>
-                <option value="ghazipur">गाज़ीपुर</option>
-                <option value="latur">लातूर</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="action-row">
-            <Link href="/officer" className="btn-primary">
-              Login to Dashboard
-            </Link>
-            <button type="button" className="btn-secondary">
-              Forgot Password
-            </button>
-          </div>
-        </main>
-      </div>
-    </div>
+    <main className="auth-wrap officer-login">
+        <div className="auth-badge"><LockKey size={15} /> PS 26032 · Secure Employee Login</div>
+        <h1 className="portal-title">मंडी अधिकारी पोर्टल</h1>
+        <p className="muted login-subtitle">कतार, तौल और भुगतान — एक ही डैशबोर्ड से प्रबंधित करें।</p>
+        <form onSubmit={handleLogin}>
+          <label className="f-label">कर्मचारी आईडी (Employee ID)</label>
+          <input className="inp-basic" placeholder="DOCA-OFF-2291" defaultValue="DOCA-OFF-2291" />
+          <label className="f-label">तैनाती मंडी (Assigned Mandi)</label>
+          <select className="inp-basic" value={mandi} onChange={(event) => setMandi(event.target.value)}>
+            <option>आज़ादपुर मंडी</option><option>गाज़ीपुर सेंटर</option>
+          </select>
+          <label className="f-label">सुरक्षित पिन (6-अंक)</label>
+          <input className="inp-basic pin-input" type="password" maxLength={6} placeholder="• • • • • •" defaultValue="221199" />
+          <button className="btn-primary login-button h-14 min-h-0" type="submit">सुरक्षित लॉगिन (Secure Login)</button>
+        </form>
+        <p className="login-note">केवल अधिकृत DoCA / मंडी बोर्ड कर्मचारियों के लिए</p>
+      </main>
   );
 }

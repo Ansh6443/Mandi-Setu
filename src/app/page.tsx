@@ -1,61 +1,70 @@
+"use client";
+
 import Link from "next/link";
 import {
   ArrowRight,
-  CalendarDays,
-  Landmark,
+  Bank,
+  CalendarBlank,
   Leaf,
   Phone,
-  Sparkles,
-  TrendingUp,
-} from "lucide-react";
+  Sparkle,
+  TrendUp,
+} from "@phosphor-icons/react";
+import LanguageSwitcher from "@/components/LanguageSwitcher";
+import { useLanguage } from "@/lib/i18n";
 
 const queueStats = [
-  { name: "आज़ादपुर मंडी", token: "T - 114", wait: "18 min avg wait" },
-  { name: "गाज़ीपुर मंडी", token: "T - 067", wait: "9 min avg wait" },
-  { name: "लातूर (NCCF)", token: "T - 032", wait: "41 min avg wait" },
+  { name: "लखनऊ दुबग्गा मंडी", token: "T - 114", wait: "18 min avg wait" },
+  { name: "गोरखपुर मंडी", token: "T - 067", wait: "9 min avg wait" },
+  { name: "कानपुर नवाबगंज मंडी", token: "T - 032", wait: "41 min avg wait" },
 ];
 
 const services = [
   {
-    icon: CalendarDays,
-    title: "स्मार्ट स्लॉट बुकिंग",
-    description:
-      "घर बैठे मंडी में अपनी फसल बेचने का दिन और समय चुनें। भीड़ से बचें और अपना समय बचाएं।",
+    icon: CalendarBlank,
+    title: "booking" as const,
+    description: "bookingDescription" as const,
     tone: "civic",
   },
   {
-    icon: TrendingUp,
-    title: "लाइव स्टेटस ट्रैकिंग",
-    description:
-      "मंडी गेट-पास से लेकर तौल और गुणवत्ता चेक तक हर कदम की लाइव अपडेट पाएं।",
+    icon: TrendUp,
+    title: "tracking" as const,
+    description: "trackingDescription" as const,
     tone: "ok",
   },
   {
-    icon: Landmark,
-    title: "DBT व डिजिटल J-Form",
-    description:
-      "नीलामी के तुरंत बाद सिस्टम जनरेटेड J-Form और सीधा बैंक खाते में भुगतान।",
+    icon: Bank,
+    title: "payment" as const,
+    description: "paymentDescription" as const,
     tone: "saffron",
   },
 ];
 
+const trustStats = [
+  { value: "120+", label: "connectedMandis" as const },
+  { value: "~40%", label: "waitReduction" as const },
+  { value: "3+", label: "availableLanguages" as const },
+];
+
 export default function HomePage() {
+  const { t } = useLanguage();
+
   return (
     <div className="app-shell">
       <div className="top-gov-bar">
         <div className="gov-left">
-          <span className="doca-badge">DOCA समस्या समाधान #26032</span>
-          <span>भारत सरकार | उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय</span>
+          <span className="doca-badge">DOCA {t("language") === "Language" ? "Issue Resolution" : "समस्या समाधान"} #26032</span>
+          <span>{t("language") === "Language" ? "Government of India | Ministry of Consumer Affairs, Food & Public Distribution" : "भारत सरकार | उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय"}</span>
         </div>
 
         <div className="gov-right">
           <span className="voice-link">
-            <Sparkles size={15} />
-            बोलकर सुनें
+            <Sparkle size={15} />
+            {t("speak")}
           </span>
           <span className="phone-link">
             <Phone size={15} />
-            1800-180-1551
+            080 4749 5548
           </span>
         </div>
       </div>
@@ -67,20 +76,18 @@ export default function HomePage() {
               <Leaf size={20} />
             </div>
             <div>
-              <div className="brand-name">किसान साथी</div>
-              <div className="brand-subtitle">स्मार्ट मंडी प्रोक्योरमेंट पोर्टल</div>
+              <div className="brand-name">{t("brand")}</div>
+              <div className="brand-subtitle">{t("brandSubtitle")}</div>
             </div>
           </Link>
 
           <nav className="nav-links" aria-label="Main navigation">
-            <Link href="/">होम</Link>
-            <Link href="#services">सुविधाएं</Link>
-            <Link href="/officer/login">अधिकारी</Link>
+            <Link href="/">{t("home")}</Link>
+            <Link href="#services">{t("services")}</Link>
+            <Link href="/officer/login">{t("officer")}</Link>
           </nav>
 
-          <Link href="/farmer" className="btn-primary header-button">
-            लॉगिन / ऐप खोलें
-          </Link>
+          <div className="header-actions"><LanguageSwitcher /><Link href="/farmer" className="btn-primary header-button">{t("openApp")}</Link></div>
         </div>
       </header>
 
@@ -88,59 +95,64 @@ export default function HomePage() {
         <section className="hero" id="hero">
           <div className="hero-copy">
             <div className="hero-badge">
-              PS 26032 • Ministry of Consumer Affairs, Food & Public Distribution
+              {t("heroBadge")}
             </div>
 
             <h1>
-              कतारें चलेंगी.
-              <br />
-              किसान की <u>उलझन रुकेगी।</u>
+              {t("heroTitle")}
             </h1>
 
-            <p>
-              सरकारी मंडियों में एमएसपी (MSP) पर फसल बेचने वाले किसान अब घंटों इंतज़ार नहीं
-              करेंगे। &apos;किसान साथी&apos; मौजूदा प्रोक्योरमेंट सिस्टम को बदलता नहीं है, बल्कि उसमें
-              पारदर्शिता, रफ़्तार और भरोसे की एक स्मार्ट लेयर जोड़ता है।
+            <p className="hero-subheading">
+              {t("heroSubtitle")}
             </p>
+
+            <div className="trust-strip" aria-label={t("prototypeEstimate")}>
+              {trustStats.map(({ value, label }, index) => (
+                <div key={label} className={`trust-stat${index > 0 ? " with-divider" : ""}`}>
+                  <strong>{value}</strong>
+                  <span>{t(label)}</span>
+                </div>
+              ))}
+              <small>{t("prototypeEstimate")}</small>
+            </div>
 
             <div className="cta-row">
               <Link href="/farmer" className="btn-primary cta-button">
-                किसान ऐप खोलें (Farmer App)
+                {t("farmerApp")}
                 <ArrowRight size={18} />
               </Link>
 
               <Link href="/officer/login" className="btn-secondary cta-button">
-                मंडी अधिकारी व्यू (Officer Portal)
+                {t("officerPortal")}
               </Link>
             </div>
           </div>
 
           <div className="hero-panel">
             <div className="panel-header">
-              <span>LIVE — TODAY&apos;S CENTRES</span>
+              <span>{t("liveCentres")}</span>
               <span className="live-indicator">
                 <span className="live-dot" />
-                updating
+                {t("updating")}
               </span>
             </div>
 
             {queueStats.map((item) => (
-              <div key={item.name} className="queue-row">
-                <span className="queue-name">{item.name}</span>
-                <span className="queue-token">{item.token}</span>
-                <span className="queue-wait">{item.wait}</span>
-              </div>
-            ))}
-
+  <div key={item.name} className="queue-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+    <span className="queue-name" style={{ flex: 1 }}>{item.name}</span>
+    <span className="queue-token" style={{ flex: 1, textAlign: 'center' }}>{item.token}</span>
+    <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>{item.wait}</span>
+  </div>
+))}
             <div className="panel-footnote">
-              Same board, three ways to read it: PWA App, SMS, or the physical display at the gate.
+              {t("sameBoard")}
             </div>
           </div>
         </section>
 
         <section className="services" id="services">
-          <h2>हमारी मुख्य सुविधाएं</h2>
-          <p>स्मार्ट खेती, स्मार्ट व्यापार</p>
+          <h2>{t("mainServices")}</h2>
+          <p>{t("smartFarming")}</p>
 
           <div className="service-grid">
             {services.map(({ icon: Icon, title, description, tone }) => (
@@ -148,8 +160,8 @@ export default function HomePage() {
                 <div className={`service-icon ${tone}`}>
                   <Icon size={26} />
                 </div>
-                <h3>{title}</h3>
-                <p>{description}</p>
+                <h3>{t(title)}</h3>
+                <p>{t(description)}</p>
               </article>
             ))}
           </div>
@@ -158,7 +170,7 @@ export default function HomePage() {
 
       <footer className="site-footer">
         <div className="footer-brand">किसान साथी — SIH 26032</div>
-        <div>© 2026 भारत सरकार (प्रोटोटाइप)। सभी अधिकार सुरक्षित।</div>
+        <div>{t("footer")}</div>
       </footer>
     </div>
   );
