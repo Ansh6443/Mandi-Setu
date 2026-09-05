@@ -1,17 +1,22 @@
 "use client";
 
 import { Microphone, Warning } from "@phosphor-icons/react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 type SosState = "default" | "listening" | "sent";
 
 export default function VoiceSOSButton() {
   const [sosState, setSosState] = useState<SosState>("default");
+  const sentTimeout = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (sentTimeout.current !== null) window.clearTimeout(sentTimeout.current);
+  }, []);
 
   function handleClick() {
     if (sosState === "default") {
       setSosState("listening");
-      window.setTimeout(() => setSosState("sent"), 1500);
+      sentTimeout.current = window.setTimeout(() => setSosState("sent"), 1500);
       return;
     }
 

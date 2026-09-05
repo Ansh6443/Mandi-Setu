@@ -27,7 +27,11 @@ export default function Sidebar() {
   const pathname = usePathname();
 
   function handleLogout() {
-    window.localStorage.removeItem("officer-authenticated");
+    try {
+      window.localStorage.removeItem("officer-authenticated");
+    } catch {
+      // Continue to the login route if browser storage is unavailable.
+    }
     router.replace("/officer/login");
   }
 

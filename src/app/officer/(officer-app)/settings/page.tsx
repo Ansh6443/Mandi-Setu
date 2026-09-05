@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const ratesStorageKey = "kisan-setu-msp-rates";
 
 const initialRates = [
   { crop: "प्याज", value: "1850" },
@@ -13,12 +15,44 @@ const initialRates = [
 export default function SettingsPage() {
   const [isOpen, setIsOpen] = useState(true);
   const [capacity, setCapacity] = useState("120");
-  const [rates, setRates] = useState(initialRates);
+  const [rates, setRates] = useState(() => {
+    if (typeof window === "undefined") return initialRates;
+    try {
+      const savedRates = window.localStorage.getItem(ratesStorageKey);
+      const parsedRates = savedRates ? JSON.parse(savedRates) : null;
+      return Array.isArray(parsedRates) ? parsedRates : initialRates;
+    } catch {
+      return initialRates;
+    }
+  });
+
+  useEffect(() => {
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key !== ratesStorageKey || !event.newValue) return;
+      try {
+        const parsedRates = JSON.parse(event.newValue);
+        if (Array.isArray(parsedRates)) setRates(parsedRates);
+      } catch {
+        // Keep the current settings when another tab writes invalid data.
+      }
+    };
+
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   function updateRate(index: number, value: string) {
-    setRates((current) => current.map((rate, rateIndex) =>
+    setRates((current) => {
+      const nextRates = current.map((rate, rateIndex) =>
       rateIndex === index ? { ...rate, value } : rate,
-    ));
+      );
+      try {
+        window.localStorage.setItem(ratesStorageKey, JSON.stringify(nextRates));
+      } catch {
+        // Keep the edit in the current page when browser storage is unavailable.
+      }
+      return nextRates;
+    });
   }
 
   return (
@@ -34,16 +68,22 @@ export default function SettingsPage() {
             <h2 className="text-base font-black text-gray-900">मंडी स्थिति</h2>
             <p className="text-sm font-semibold text-gray-600">{isOpen ? "खुली है — किसान अभी बुकिंग कर सकते हैं" : "बंद है — किसान बुकिंग नहीं कर सकते"}</p>
           </div>
-          <button
-            type="button"
-            role="switch"
-            aria-checked={isOpen}
-            aria-label="मंडी स्थिति बदलें"
-            onClick={() => setIsOpen((current) => !current)}
-            className={`flex h-14 w-14 items-center rounded-full p-1 transition-colors ${isOpen ? "bg-[var(--success)]" : "bg-[var(--text-secondary)]"}`}
-          >
-            <span className={`h-10 w-10 rounded-full bg-white shadow-sm transition-transform ${isOpen ? "translate-x-2" : "translate-x-0"}`} />
-          </button>
+       <button
+  type="button"
+  role="switch"
+  aria-checked={isOpen}
+  aria-label="मंडी स्थिति बदलें"
+  onClick={() => setIsOpen((current) => !current)}
+  className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition-colors duration-200 ${
+    isOpen ? "bg-[var(--success)]" : "bg-gray-300"
+  }`}
+>
+  <span
+    className={`h-6 w-6 rounded-full bg-white shadow-md ring-1 ring-black/5 transition-transform duration-200 ${
+      isOpen ? "translate-x-6" : "translate-x-0"
+    }`}
+  />
+</button>
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

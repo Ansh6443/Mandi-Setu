@@ -2,7 +2,7 @@
 
 import { Bell, CalendarBlank, Check, CaretRight, CreditCard, House, Leaf, LockKey, MapPin, Phone, Plant, Plus, ShieldCheck, SignOut, SpeakerHigh, CheckCircle, User } from "@phosphor-icons/react";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/lib/i18n";
 
@@ -91,6 +91,29 @@ export default function KisanApp() {
   const [receiptPhoto, setReceiptPhoto] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  useEffect(() => {
+    if (currentView !== "receipt") return;
+
+    const readReceiptPhoto = () => {
+      try {
+        const storedReceipt = window.localStorage.getItem("kisan-setu-weighment-receipt");
+        const receipt = storedReceipt ? JSON.parse(storedReceipt) as { photo?: string } : null;
+        setReceiptPhoto(receipt?.photo ?? null);
+      } catch {
+        setReceiptPhoto(null);
+      }
+    };
+
+    readReceiptPhoto();
+    window.addEventListener("storage", readReceiptPhoto);
+    const refreshTimer = window.setInterval(readReceiptPhoto, 500);
+
+    return () => {
+      window.removeEventListener("storage", readReceiptPhoto);
+      window.clearInterval(refreshTimer);
+    };
+  }, [currentView]);
+
   const validMobile = mobile.replace(/\D/g, "").length === 10;
   const validOtp = mobileOtp.replace(/\D/g, "").length === 6;
   const validAadhaar = aadhaar.replace(/\D/g, "").length === 12;
@@ -98,14 +121,15 @@ export default function KisanApp() {
   const validIdentityOtp = identityOtp.replace(/\D/g, "").length === 6;
 
   const openReceipt = () => {
-    const storedReceipt = window.localStorage.getItem("kisan-setu-weighment-receipt");
-    if (storedReceipt) {
-      try {
+    setReceiptPhoto(null);
+    try {
+      const storedReceipt = window.localStorage.getItem("kisan-setu-weighment-receipt");
+      if (storedReceipt) {
         const receipt = JSON.parse(storedReceipt) as { photo?: string };
         setReceiptPhoto(receipt.photo ?? null);
-      } catch {
-        setReceiptPhoto(null);
       }
+    } catch {
+      setReceiptPhoto(null);
     }
     setCurrentView("receipt");
   };
@@ -220,7 +244,7 @@ export default function KisanApp() {
     return (
       <div className="auth-shell">
         <div className="auth-card">
-          <div className="auth-brand auth-brand-with-language">
+          <div className="auth-brand">
             <div className="brand-mark small">
               <Leaf size={18} />
             </div>
@@ -228,7 +252,6 @@ export default function KisanApp() {
               <div className="brand-name">{t("brand")}</div>
               <div className="brand-subtitle auth-subtitle">{t("farmerAuthSubtitle")}</div>
             </div>
-            <LanguageSwitcher />
           </div>
 
           {authStep === "mobile" && (
@@ -769,6 +792,9 @@ export default function KisanApp() {
 
         {currentView === "profile" && (
          <div className="panel-card profile-card max-w-2xl mx-auto rounded-[24px] p-6 md:p-8 mt-8">
+            <div className="profile-language-switcher">
+              <LanguageSwitcher />
+            </div>
             <div className="profile-top">
               <div className="avatar">RK</div>
               <div>

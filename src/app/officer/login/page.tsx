@@ -10,7 +10,11 @@ export default function OfficerLoginPage() {
 
   function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    window.localStorage.setItem("officer-authenticated", "true");
+    try {
+      window.localStorage.setItem("officer-authenticated", "true");
+    } catch {
+      // The guard will redirect back if browser storage is unavailable.
+    }
     router.push("/officer/dashboard");
   }
 

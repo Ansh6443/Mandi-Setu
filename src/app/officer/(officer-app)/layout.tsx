@@ -16,7 +16,14 @@ export default function OfficerAppLayout({
 
   // 🔒 सिक्योरिटी गार्ड (Auth Logic)
   useEffect(() => {
-    if (window.localStorage.getItem("officer-authenticated") !== "true") {
+    let authenticated = false;
+    try {
+      authenticated = window.localStorage.getItem("officer-authenticated") === "true";
+    } catch {
+      authenticated = false;
+    }
+
+    if (!authenticated) {
       router.replace("/officer/login");
       return;
     }

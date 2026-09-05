@@ -3,6 +3,7 @@
 import { CheckCircle, Scales } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { useEffect } from "react";
 
 const farmer = {
   name: "रमेश पवार",
@@ -10,14 +11,34 @@ const farmer = {
   commodity: "प्याज",
 };
 
-const mspRate = 1850;
+const defaultMspRates: Record<string, number> = { प्याज: 1850 };
+const ratesStorageKey = "kisan-setu-msp-rates";
 
 export default function WeighmentPanel() {
   const router = useRouter();
   const [weight, setWeight] = useState("60");
   const [submitted, setSubmitted] = useState(false);
+  const [mspRates, setMspRates] = useState(defaultMspRates);
+
+  useEffect(() => {
+    const readRates = () => {
+      try {
+        const savedRates = window.localStorage.getItem(ratesStorageKey);
+        if (!savedRates) return;
+        const parsedRates = JSON.parse(savedRates) as Array<{ crop?: string; value?: string }>;
+        setMspRates(Object.fromEntries(parsedRates.map((rate) => [rate.crop, Number(rate.value)])));
+      } catch {
+        setMspRates(defaultMspRates);
+      }
+    };
+
+    readRates();
+    window.addEventListener("storage", readRates);
+    return () => window.removeEventListener("storage", readRates);
+  }, []);
 
   const numericWeight = Number(weight);
+  const mspRate = mspRates[farmer.commodity] ?? defaultMspRates[farmer.commodity];
   const gross = numericWeight > 0 ? numericWeight * mspRate : 0;
   const tax = gross * 0.01;
   const net = gross - tax;

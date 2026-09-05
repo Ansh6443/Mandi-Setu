@@ -2,7 +2,8 @@
 
 import { CalendarCheck, CheckCircle, ChartLineUp, Clock, MicrophoneStage, SpeakerHigh, SquaresFour } from "@phosphor-icons/react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 type QueueEntry = {
   name: string;
@@ -27,8 +28,28 @@ const statusClass: Record<QueueEntry["status"], string> = {
 };
 
 export default function OfficerPage() {
+  const router = useRouter();
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [entries, setEntries] = useState(initialEntries);
   const [toast, setToast] = useState("");
+
+  useEffect(() => {
+    let authenticated = false;
+    try {
+      authenticated = window.localStorage.getItem("officer-authenticated") === "true";
+    } catch {
+      authenticated = false;
+    }
+
+    if (!authenticated) {
+      router.replace("/officer/login");
+      return;
+    }
+    const frameId = window.requestAnimationFrame(() => setIsAuthenticated(true));
+    return () => window.cancelAnimationFrame(frameId);
+  }, [router]);
+
+  if (isAuthenticated !== true) return null;
 
   function callNextToken() {
     const next = entries.find((entry) => entry.status === "चेक-इन");
@@ -47,8 +68,11 @@ export default function OfficerPage() {
   }
 
   function assignSlot(token: number) {
-    setEntries((current) => current.map((entry) => entry.token === token ? { ...entry, status: "चेक-इन" } : entry));
-    setToast(`टोकन #${token} के लिए स्लॉट असाइन किया गया`);
+    const entry = entries.find((item) => item.token === token);
+    if (!entry) return;
+    const nextStatus = entry.status === "चेक-इन" ? "तौल जारी" : "चेक-इन";
+    setEntries((current) => current.map((item) => item.token === token ? { ...item, status: nextStatus } : item));
+    setToast(nextStatus === "तौल जारी" ? `टोकन #${token} की तौल शुरू हुई` : `टोकन #${token} के लिए स्लॉट असाइन किया गया`);
   }
 
   return (
@@ -72,7 +96,7 @@ export default function OfficerPage() {
         {toast && <div className="officer-toast"><MicrophoneStage size={18} />{toast}</div>}
         <section className="officer-card officer-queue-card rounded-2xl border border-gray-200 p-6">
           <div className="officer-card-heading"><h2>आज की कतार — एक नज़र में</h2><Link href="/officer/queue" className="officer-ghost-button flex h-14 items-center rounded-xl">पूरी सूची <ChartLineUp size={15} /></Link></div>
-          <div className="officer-table-wrap"><table><thead><tr><th>टोकन</th><th>किसान</th><th>फसल</th><th>स्टेटस</th><th>एक्शन</th></tr></thead><tbody>{entries.map((entry) => <tr key={entry.token}><td>#{entry.token}</td><td>{entry.name}</td><td>{entry.crop}</td><td><span className={`officer-status ${statusClass[entry.status]}`}><span />{entry.status}</span></td><td><button type="button" className="officer-row-action" onClick={() => assignSlot(entry.token)}>{entry.status === "चेक-इन" ? "स्लॉट असाइन" : "विवरण"}</button></td></tr>)}</tbody></table></div>
+          <div className="officer-table-wrap"><table><thead><tr><th>टोकन</th><th>किसान</th><th>फसल</th><th>स्टेटस</th><th>एक्शन</th></tr></thead><tbody>{entries.map((entry) => <tr key={entry.token}><td>#{entry.token}</td><td>{entry.name}</td><td>{entry.crop}</td><td><span className={`officer-status ${statusClass[entry.status]}`}><span />{entry.status}</span></td><td><button type="button" className="officer-row-action" onClick={() => assignSlot(entry.token)}>{entry.status === "चेक-इन" ? "तौल शुरू करें" : entry.status === "तौल जारी" ? "तौल जारी रखें" : "चेक-इन करें"}</button></td></tr>)}</tbody></table></div>
         </section>
         <section className="officer-dashboard-columns gap-6"><div className="officer-card rounded-2xl border border-gray-200 p-6"><div className="officer-card-heading"><h2>ऑपरेशनल स्नैपशॉट</h2></div><div className="officer-stats-grid gap-6"><div className="p-6"><strong>94%</strong><span>गेट पास जारी</span></div><div className="p-6"><strong>24</strong><span>सक्रिय किसान</span></div><div className="p-6"><strong>₹ 2.3L</strong><span>आज का भुगतान</span></div><div className="p-6"><strong>5</strong><span>लंबित समीक्षा</span></div></div></div><div className="officer-card rounded-2xl border border-gray-200 p-6"><div className="officer-card-heading"><h2>मैनुअल हस्तक्षेप</h2></div><div className="officer-intervention py-4"><span>वज़न सत्यापन</span><span>उच्च</span></div><div className="officer-intervention py-4"><span>गुणवत्ता निरीक्षण</span><span>मध्यम</span></div></div></section>
       </div>

@@ -14,9 +14,9 @@ import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/lib/i18n";
 
 const queueStats = [
-  { name: "लखनऊ दुबग्गा मंडी", token: "T - 114", wait: "18 min avg wait" },
-  { name: "गोरखपुर मंडी", token: "T - 067", wait: "9 min avg wait" },
-  { name: "कानपुर नवाबगंज मंडी", token: "T - 032", wait: "41 min avg wait" },
+  { name: "लखनऊ दुबग्गा मंडी", token: "T - 114", waitMinutes: 18 },
+  { name: "गोरखपुर मंडी", token: "T - 067", waitMinutes: 9 },
+  { name: "कानपुर नवाबगंज मंडी", token: "T - 032", waitMinutes: 41 },
 ];
 
 const services = [
@@ -47,7 +47,7 @@ const trustStats = [
 ];
 
 export default function HomePage() {
-  const { t } = useLanguage();
+  const { language, t } = useLanguage();
 
   return (
     <div className="app-shell">
@@ -94,9 +94,7 @@ export default function HomePage() {
       <main className="page-shell">
         <section className="hero" id="hero">
           <div className="hero-copy">
-            <div className="hero-badge">
-              {t("heroBadge")}
-            </div>
+            
 
             <h1>
               {t("heroTitle")}
@@ -106,14 +104,13 @@ export default function HomePage() {
               {t("heroSubtitle")}
             </p>
 
-            <div className="trust-strip" aria-label={t("prototypeEstimate")}>
+            <div className="trust-strip">
               {trustStats.map(({ value, label }, index) => (
                 <div key={label} className={`trust-stat${index > 0 ? " with-divider" : ""}`}>
                   <strong>{value}</strong>
                   <span>{t(label)}</span>
                 </div>
               ))}
-              <small>{t("prototypeEstimate")}</small>
             </div>
 
             <div className="cta-row">
@@ -141,7 +138,9 @@ export default function HomePage() {
   <div key={item.name} className="queue-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
     <span className="queue-name" style={{ flex: 1 }}>{item.name}</span>
     <span className="queue-token" style={{ flex: 1, textAlign: 'center' }}>{item.token}</span>
-    <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>{item.wait}</span>
+    <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>
+      {language === "hi" ? `${item.waitMinutes} मिनट औसत प्रतीक्षा` : `${item.waitMinutes} min avg wait`}
+    </span>
   </div>
 ))}
             <div className="panel-footnote">
@@ -149,7 +148,6 @@ export default function HomePage() {
             </div>
           </div>
         </section>
-
         <section className="services" id="services">
           <h2>{t("mainServices")}</h2>
           <p>{t("smartFarming")}</p>

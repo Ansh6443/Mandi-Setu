@@ -1,9 +1,34 @@
 "use client";
 
 import { Clock, MapPin } from "@phosphor-icons/react";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import VoiceSOSButton from "@/components/farmer/VoiceSOSButton";
 
 export default function FarmerReceiptPage() {
+  const [receiptPhoto, setReceiptPhoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    const readReceiptPhoto = () => {
+      try {
+        const storedReceipt = window.localStorage.getItem("kisan-setu-weighment-receipt");
+        const receipt = storedReceipt ? JSON.parse(storedReceipt) as { photo?: string } : null;
+        setReceiptPhoto(receipt?.photo ?? null);
+      } catch {
+        setReceiptPhoto(null);
+      }
+    };
+
+    readReceiptPhoto();
+    window.addEventListener("storage", readReceiptPhoto);
+    const refreshTimer = window.setInterval(readReceiptPhoto, 500);
+
+    return () => {
+      window.removeEventListener("storage", readReceiptPhoto);
+      window.clearInterval(refreshTimer);
+    };
+  }, []);
+
   return (
     <main className="min-h-screen bg-slate-50 p-4">
       <div className="mx-auto max-w-md">
@@ -24,7 +49,11 @@ export default function FarmerReceiptPage() {
           <div className="rounded-xl border-2 border-dashed border-slate-300 bg-slate-50 p-4">
             <h2 className="mb-4 font-bold text-slate-900">कांटे का प्रमाणित साक्ष्य</h2>
             <div className="flex min-h-40 items-center justify-center rounded-lg border border-slate-200 bg-white text-center text-sm font-semibold text-slate-500">
-              अधिकारी द्वारा अपलोड की गई फोटो
+              {receiptPhoto ? (
+                <Image src={receiptPhoto} alt="अधिकारी द्वारा अपलोड की गई कांटे की फोटो" width={600} height={240} className="max-h-60 w-full rounded-lg object-contain" unoptimized />
+              ) : (
+                "अधिकारी द्वारा अपलोड की गई फोटो उपलब्ध नहीं है"
+              )}
             </div>
             <div className="mt-4 flex items-center justify-center gap-4 text-xs font-bold text-slate-600">
               <span className="flex items-center gap-1">
