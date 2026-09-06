@@ -1884,15 +1884,16 @@ body {
 .timeline:not(.compact) .timeline-item:not(:last-child)::after {
   position: absolute;
   top: 21px;
-  bottom: -21px;
+  height: 100%;
   left: 5px;
-  width: 2px;
+  width: 3px;
   background: #d9e0e4;
   content: "";
   z-index: 0;
 }
 
-.timeline:not(.compact) .timeline-item.active:not(:last-child)::after {
+.timeline:not(.compact) .timeline-item.active:not(:last-child)::after,
+.timeline:not(.compact) .timeline-item.done:not(:last-child)::after {
   background: #e09f3e;
 }
 
@@ -1908,6 +1909,11 @@ body {
   margin-top: 3px;
   background: #d9e0e4;
   border: 2px solid #ffffff;
+  position: relative;
+  z-index: 1;
+}
+
+.timeline-item > div:last-child {
   position: relative;
   z-index: 1;
 }
