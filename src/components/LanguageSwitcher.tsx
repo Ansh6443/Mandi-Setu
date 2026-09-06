@@ -25,7 +25,15 @@ export default function LanguageSwitcher() {
                 if (response.ok) {
                     const data = await response.json();
                     if (Array.isArray(data) && data.length > 0) {
-                        setLangs(data); // Backend wali nayi languages set kar dega
+                        const supportedLanguages = data.filter(
+                            (item): item is { code: string; label: string } =>
+                                typeof item?.code === "string" &&
+                                typeof item?.label === "string" &&
+                                ["hi", "en"].includes(item.code),
+                        );
+                        if (supportedLanguages.length > 0) {
+                            setLangs(supportedLanguages);
+                        }
                     }
                 }
             } catch {

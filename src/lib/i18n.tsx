@@ -114,6 +114,8 @@ const defaultTranslations: Record<string, Record<string, string>> = {
   }
 };
 
+const supportedLanguages = Object.keys(defaultTranslations);
+
 type LanguageContextValue = {
   language: string;
   setLanguage: (lang: string) => void;
@@ -124,12 +126,14 @@ const LanguageContext = createContext<LanguageContextValue | null>(null);
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguage] = useState<string>("hi");
-  const [translations, setTranslations] = useState(defaultTranslations);
+  const translations = defaultTranslations;
 
   useEffect(() => {
     try {
       const savedLanguage = window.localStorage.getItem(STORAGE_KEYS.language);
-      if (savedLanguage) startTransition(() => setLanguage(savedLanguage));
+      if (savedLanguage && supportedLanguages.includes(savedLanguage)) {
+        startTransition(() => setLanguage(savedLanguage));
+      }
     } catch {
       // Keep the default language when storage is unavailable.
     }
@@ -144,29 +148,6 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
     document.documentElement.lang = language;
 
-    const controller = new AbortController();
-    const fetchTranslation = async () => {
-      // Agar backend URL nahi hai ya language pehle se default mein hai, toh fetch mat karo
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
-      if (!apiUrl || defaultTranslations[language]) return;
-
-      try {
-        const response = await fetch(`${apiUrl}/api/translations?lang=${language}`, { signal: controller.signal });
-        if (response.ok) {
-          const newWords = await response.json();
-          if (newWords && typeof newWords === "object" && !Array.isArray(newWords)) {
-            setTranslations(prev => ({ ...prev, [language]: newWords }));
-          }
-        }
-      } catch {
-        if (!controller.signal.aborted) {
-          console.error("Backend translation API failed, falling back.");
-        }
-      }
-    };
-    fetchTranslation();
-
-    return () => controller.abort();
   }, [language]);
 
   const t = (key: string) => {
