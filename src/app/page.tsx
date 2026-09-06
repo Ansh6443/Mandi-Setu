@@ -61,7 +61,7 @@ export default function HomePage() {
             <span className="phone-icon">
               <Phone size={15} />
             </span>
-            095138 86363
+            080 4728 0994
           </span>
           <LanguageSwitcher />
         </div>
