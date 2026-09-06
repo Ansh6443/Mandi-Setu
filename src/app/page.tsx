@@ -46,14 +46,14 @@ const trustStats = [
 ];
 
 export default function HomePage() {
-  const { language, t } = useLanguage();
+  const { t } = useLanguage();
 
   return (
     <div className="app-shell">
       <div className="top-gov-bar">
         <div className="gov-left">
-          <span className="doca-badge">DOCA {t("language") === "Language" ? "Issue Resolution" : "समस्या समाधान"} #26032</span>
-          <span>{t("language") === "Language" ? "Government of India | Ministry of Consumer Affairs, Food & Public Distribution" : "भारत सरकार | उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय"}</span>
+          <span className="doca-badge">DOCA {t("govIssue")} #26032</span>
+          <span>{t("govMinistry")}</span>
         </div>
 
         <div className="gov-right">
@@ -69,22 +69,22 @@ export default function HomePage() {
 
       <header className="site-header">
         <div className="nav-container">
-          <Link href="/" className="brand" aria-label="Mandi Setu home">
+          <Link href="/" className="brand" aria-label={t("mandiSetuHome")}>
             <Image
               src="/mandi-setu-logo.svg"
-              alt="मंडी सेतु लोगो"
+              alt={t("brand")}
               width={62}
               height={46}
               priority
               className="brand-logo"
             />
             <span className="brand-copy">
-              <span className="brand-name">मंडी सेतु</span>
-              <span className="brand-subtitle">स्मार्ट मंडी प्रोक्योरमेंट पोर्टल</span>
+              <span className="brand-name">{t("brand")}</span>
+              <span className="brand-subtitle">{t("brandSubtitle")}</span>
             </span>
           </Link>
 
-          <nav className="nav-links" aria-label="Main navigation">
+          <nav className="nav-links" aria-label={t("mainNavigation")}>
             <Link href="/">{t("home")}</Link>
             <Link href="#services">{t("services")}</Link>
             <Link href="/officer/login">{t("officer")}</Link>
@@ -142,7 +142,7 @@ export default function HomePage() {
     <span className="queue-name" style={{ flex: 1 }}>{item.name}</span>
     <span className="queue-token" style={{ flex: 1, textAlign: 'center' }}>{item.token}</span>
     <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>
-      {language === "hi" ? `${item.waitMinutes} मिनट प्रतीक्षा` : `${item.waitMinutes} min wait`}
+      {`${item.waitMinutes} ${t("minWait")}`}
     </span>
   </div>
 ))}

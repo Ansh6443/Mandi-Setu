@@ -147,12 +147,8 @@ export default function KisanApp() {
       return;
     }
 
-    const announcement = new SpeechSynthesisUtterance(
-      language === "en"
-        ? "Payment complete. Net payment amount is ninety thousand ninety rupees."
-        : "भुगतान पूरा हुआ। निवल भुगतान राशि नब्बे हजार नब्बे रुपये है।",
-    );
-    announcement.lang = language === "en" ? "en-IN" : "hi-IN";
+    const announcement = new SpeechSynthesisUtterance(t("paymentComplete"));
+    announcement.lang = language === "en" ? "en-IN" : `${language}-IN`;
     announcement.rate = 0.9;
     announcement.onstart = () => setIsSpeaking(true);
     announcement.onend = () => setIsSpeaking(false);
@@ -441,14 +437,14 @@ export default function KisanApp() {
             <Leaf size={18} />
           </div>
           <div>
-            <div className="brand-name">राम कुमार</div>
-            <div className="brand-subtitle">MH-26032-4812</div>
+            <div className="brand-name">{t("farmerName")}</div>
+            <div className="brand-subtitle">{t("farmerIdValue")}</div>
           </div>
         </div>
 
         {currentView !== "home" && <h1 className="screen-title">{viewTitle}</h1>}
 
-        <button type="button" className="notification-btn" aria-label="Notifications">
+        <button type="button" className="notification-btn" aria-label={t("notifications")}>
           <Bell size={18} />
         </button>
       </header>
@@ -515,7 +511,7 @@ export default function KisanApp() {
               {marketRates.map((rate) => (
                 <div key={rate.crop} className="rate-card">
                   <span className="rate-crop-icon" aria-hidden="true">{cropIcons[rate.key]}</span>
-                  <div className="rate-crop-name">{rate.crop}</div>
+                  <div className="rate-crop-name">{t(rate.key)}</div>
                   <div className="rate-price">{rate.price}</div>
                   <div className={`rate-change ${rate.up ? "up" : "down"}`}>{rate.up ? "▲" : "▼"} {rate.change}</div>
                 </div>
@@ -526,7 +522,7 @@ export default function KisanApp() {
               <div className="empty-card">
                 <div className="empty-badge">● {t("noBooking")}</div>
                 <div className="empty-icon">
-                  <Image src="/mandi-setu-logo.svg" alt="किसान लोगो" width={54} height={54} />
+                  <Image src="/mandi-setu-logo.svg" alt={t("brand")} width={54} height={54} />
                 </div>
                 <h3>{t("noBooking")}</h3>
                 <p>{t("bookPrompt")}</p>
@@ -541,11 +537,11 @@ export default function KisanApp() {
         className="bg-transparent border-none outline-none cursor-pointer text-inherit"
         defaultValue="lucknow"
       >
-        <option value="gorakhpur">{language === "en" ? "Gorakhpur Mandi" : "गोरखपुर मंडी"}</option>
-        <option value="lucknow">{language === "en" ? "Lucknow Dubagga Mandi" : "लखनऊ दुबग्गा मंडी"}</option>
-        <option value="kanpur">{language === "en" ? "Kanpur Nawabganj Mandi" : "कानपुर नवाबगंज मंडी"}</option>
-        <option value="varanasi">{language === "en" ? "Varanasi Mandi Samiti" : "वाराणसी मंडी समिति"}</option>
-        <option value="ayodhya">{language === "en" ? "Ayodhya Krishi Mandi" : "अयोध्या कृषि मंडी"}</option>
+        <option value="gorakhpur">{t("gorakhpurMandi")}</option>
+        <option value="lucknow">{t("lucknowMandi")}</option>
+        <option value="kanpur">{t("kanpurMandi")}</option>
+        <option value="varanasi">{t("varanasiMandi")}</option>
+        <option value="ayodhya">{t("ayodhyaMandi")}</option>
       </select>
     </div>
   </div>
@@ -607,11 +603,11 @@ export default function KisanApp() {
 
             <label className="field-label">1. {t("chooseMandi")}</label>
             <select className="select-box" defaultValue="lucknow">
-  <option value="gorakhpur">{language === "en" ? "Gorakhpur Mandi (🟢 47 available)" : "गोरखपुर मंडी (🟢 47 खाली)"}</option>
-  <option value="lucknow">{language === "en" ? "Lucknow Dubagga Mandi (🟢 32 available)" : "लखनऊ दुबग्गा मंडी (🟢 32 खाली)"}</option>
-  <option value="kanpur">{language === "en" ? "Kanpur Nawabganj Mandi (🟡 15 available)" : "कानपुर नवाबगंज मंडी (🟡 15 खाली)"}</option>
-  <option value="varanasi">{language === "en" ? "Varanasi Mandi Samiti (🟡 12 available)" : "वाराणसी मंडी समिति (🟡 12 खाली)"}</option>
-  <option value="ayodhya">{language === "en" ? "Ayodhya Krishi Mandi (🔴 2 available)" : "अयोध्या कृषि मंडी (🔴 2 खाली)"}</option>
+  <option value="gorakhpur">{t("gorakhpurMandi")} (🟢 47 {t("available")})</option>
+  <option value="lucknow">{t("lucknowMandi")} (🟢 32 {t("available")})</option>
+  <option value="kanpur">{t("kanpurMandi")} (🟡 15 {t("available")})</option>
+  <option value="varanasi">{t("varanasiMandi")} (🟡 12 {t("available")})</option>
+  <option value="ayodhya">{t("ayodhyaMandi")} (🔴 2 {t("available")})</option>
 </select>
 
             <label className="field-label">2. {t("chooseCrop")}</label>
@@ -719,7 +715,7 @@ export default function KisanApp() {
             <h2 className="panel-title">{t("liveTracking")}</h2>
             <div className="status-banner">
               <div>
-                <small>LIVE GATE #2</small>
+                <small>{t("liveGate")}</small>
                 <strong>Token #47</strong>
               </div>
               <div>
@@ -754,7 +750,7 @@ export default function KisanApp() {
               <button
   type="button"
   className="icon-btn speaker-btn flex items-center justify-center"
-  aria-label={isSpeaking ? "Stop speaking" : "Speak payment details"}
+  aria-label={isSpeaking ? t("stopSpeaking") : t("speakPayment")}
   aria-pressed={isSpeaking}
   onClick={speakReceipt}
 >
@@ -780,7 +776,7 @@ export default function KisanApp() {
                 <h2>टोकन T-114</h2>
                 <span className="success-tag"><CheckCircle size={18} aria-hidden="true" /> {t("paymentComplete")}</span>
               </div>
-              <button type="button" className="icon-btn" aria-label="रसीद बंद करें" onClick={() => setCurrentView("payment")}>×</button>
+              <button type="button" className="icon-btn" aria-label={t("closeReceipt")} onClick={() => setCurrentView("payment")}>×</button>
             </div>
             <div className="payment-header">
               <div><small>{t("netPayment")}</small><h2>₹90,090</h2></div>
@@ -812,14 +808,14 @@ export default function KisanApp() {
 
             <div className="profile-location">
               <MapPin size={16} />
-              पिंपलगांव बसवंत, नासिक (महाराष्ट्र)
+              {t("farmerLocation")}
             </div>
 
             <div className="security-box">
               <ShieldCheck size={18} />
               <div>
                 <strong>{t("bankLinked")}</strong>
-                <small>State Bank of India (SBI) ****4521</small>
+                <small>{t("bankName")}</small>
               </div>
             </div>
 

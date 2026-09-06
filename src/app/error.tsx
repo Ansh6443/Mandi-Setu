@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 export default function GlobalError({
   error,
@@ -9,15 +10,16 @@ export default function GlobalError({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const { t } = useLanguage();
   useEffect(() => {
     console.error(error);
   }, [error]);
 
   return (
     <main role="alert">
-      <h1>कुछ समस्या आ गई</h1>
+      <h1>{t("pageError")}</h1>
       <button type="button" onClick={() => reset()}>
-        फिर कोशिश करें
+        {t("tryAgain")}
       </button>
     </main>
   );

@@ -2,11 +2,13 @@
 
 import { Microphone, Warning } from "@phosphor-icons/react";
 import { useEffect, useRef, useState } from "react";
+import { useLanguage } from "@/lib/i18n";
 
 type SosState = "default" | "listening" | "sent";
 
 export default function VoiceSOSButton() {
   const [sosState, setSosState] = useState<SosState>("default");
+  const { t } = useLanguage();
   const sentTimeout = useRef<number | null>(null);
 
   useEffect(() => () => {
@@ -26,9 +28,9 @@ export default function VoiceSOSButton() {
   }
 
   const content = {
-    default: "तौल में गड़बड़ी? बोलकर शिकायत दर्ज करें",
-    listening: "सुन रहा है...",
-    sent: "शिकायत दर्ज",
+    default: t("sosDefault"),
+    listening: t("sosListening"),
+    sent: t("sosSent"),
   }[sosState];
 
   return (

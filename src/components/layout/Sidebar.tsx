@@ -13,19 +13,21 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { useLanguage } from "@/lib/i18n";
 
 const menuItems = [
-  { label: "डैशबोर्ड", href: "/officer/dashboard", icon: SquaresFour },
-  { label: "लाइव कतार", href: "/officer/queue", icon: UsersThree },
-  { label: "लाइव तौल", href: "/officer/live-weighment", icon: Scales },
-  { label: "तौल एवं भुगतान", href: "/officer/weighment", icon: Receipt },
-  { label: "मंडी सेटिंग्स", href: "/officer/settings", icon: GearSix },
-  { label: "रिपोर्ट", href: "/officer/reports", icon: ChartLineUp },
+  { key: "dashboard", href: "/officer/dashboard", icon: SquaresFour },
+  { key: "liveQueue", href: "/officer/queue", icon: UsersThree },
+  { key: "liveWeighment", href: "/officer/live-weighment", icon: Scales },
+  { key: "weighmentPayment", href: "/officer/weighment", icon: Receipt },
+  { key: "settings", href: "/officer/settings", icon: GearSix },
+  { key: "reports", href: "/officer/reports", icon: ChartLineUp },
 ];
 
 export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useLanguage();
 
   function handleLogout() {
     try {
@@ -43,8 +45,8 @@ export default function Sidebar() {
           अ
         </div>
         <div>
-          <p className="sidebar-brand-title text-base font-bold text-[var(--text-primary)]">अधिकारी कंसोल</p>
-          <p className="text-xs font-medium text-[var(--text-secondary)]">Officer Console v1.0</p>
+          <p className="sidebar-brand-title text-base font-bold text-[var(--text-primary)]">{t("officerConsole")}</p>
+          <p className="text-xs font-medium text-[var(--text-secondary)]">{t("officerConsoleVersion")}</p>
         </div>
       </div>
 
@@ -54,16 +56,16 @@ export default function Sidebar() {
             SP
           </div>
           <div>
-            <p className="text-sm font-bold text-[var(--text-primary)]">सुनील पाटील</p>
-            <p className="text-xs font-medium text-[var(--text-secondary)]">आज़ादपुर मंडी</p>
+            <p className="text-sm font-bold text-[var(--text-primary)]">{t("officerName")}</p>
+            <p className="text-xs font-medium text-[var(--text-secondary)]">{t("officerMandi")}</p>
           </div>
         </div>
       </div>
 
-      <nav aria-label="मुख्य मेनू" className="officer-sidebar-nav mt-6 flex flex-col gap-2">
-        {menuItems.map(({ label, href, icon: Icon }) => (
+      <nav aria-label={t("mainMenu")} className="officer-sidebar-nav mt-6 flex flex-col gap-2">
+        {menuItems.map(({ key, href, icon: Icon }) => (
           <Link
-            key={label}
+            key={key}
             href={href}
             className={`flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-semibold transition-all duration-200 active:scale-95 ${
               pathname === href
@@ -72,7 +74,7 @@ export default function Sidebar() {
             }`}
           >
             <Icon size={20} weight="regular" aria-hidden="true" />
-            <span>{label}</span>
+            <span>{t(key)}</span>
           </Link>
         ))}
       </nav>
@@ -81,11 +83,11 @@ export default function Sidebar() {
         <div className="mt-8 flex items-center gap-2 rounded-lg bg-[color-mix(in_srgb,var(--success)_10%,transparent)] p-3 text-sm font-medium text-[var(--success)]">
           <span className="h-[7px] w-[7px] rounded-full bg-[var(--success)] animate-pulse" aria-hidden="true" />
           <WifiHigh size={20} weight="regular" aria-hidden="true" />
-          <span>मंडी खुली है — लाइव अपडेट सक्रिय</span>
+          <span>{t("liveMandiActive")}</span>
         </div>
         <button type="button" onClick={handleLogout} className="mt-4 flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-semibold text-[#C94A4A] transition-all duration-200 active:scale-95">
           <SignOut size={20} weight="regular" aria-hidden="true" />
-          लॉग आउट
+          {t("logout")}
         </button>
       </div>
     </aside>

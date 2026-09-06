@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { useLanguage } from "@/lib/i18n";
 
 const ratesStorageKey = STORAGE_KEYS.mspRates;
 
@@ -15,6 +16,7 @@ const initialRates = [
 
 export default function SettingsPage() {
   const [isOpen, setIsOpen] = useState(true);
+  const { t } = useLanguage();
   const [capacity, setCapacity] = useState("120");
   const [rates, setRates] = useState(() => {
     if (typeof window === "undefined") return initialRates;
@@ -59,21 +61,21 @@ export default function SettingsPage() {
   return (
     <main className="min-h-full bg-[#f4f9f4] px-6 py-6 md:px-8">
       <header className="mb-6">
-        <h1 className="text-3xl font-black text-gray-900">मंडी सेटिंग्स</h1>
-        <p className="mt-1 text-sm font-bold text-gray-600">क्षमता और आज की फसल दरें यहाँ से नियंत्रित करें</p>
+        <h1 className="text-3xl font-black text-gray-900">{t("mandiSettings")}</h1>
+        <p className="mt-1 text-sm font-bold text-gray-600">{t("settingsDescription")}</p>
       </header>
 
       <div className="grid gap-6">
         <section className="flex min-h-20 items-center justify-between gap-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div>
-            <h2 className="text-base font-black text-gray-900">मंडी स्थिति</h2>
-            <p className="text-sm font-semibold text-gray-600">{isOpen ? "खुली है — किसान अभी बुकिंग कर सकते हैं" : "बंद है — किसान बुकिंग नहीं कर सकते"}</p>
+            <h2 className="text-base font-black text-gray-900">{t("mandiStatus")}</h2>
+            <p className="text-sm font-semibold text-gray-600">{isOpen ? t("mandiOpen") : t("mandiClosed")}</p>
           </div>
        <button
   type="button"
   role="switch"
   aria-checked={isOpen}
-  aria-label="मंडी स्थिति बदलें"
+  aria-label={t("toggleMandiStatus")}
   onClick={() => setIsOpen((current) => !current)}
   className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition-colors duration-200 ${
     isOpen ? "bg-[var(--success)]" : "bg-gray-300"
@@ -88,7 +90,7 @@ export default function SettingsPage() {
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <label htmlFor="capacity" className="mb-2 block text-sm font-black text-gray-700">आज की कुल क्षमता (स्लॉट)</label>
+          <label htmlFor="capacity" className="mb-2 block text-sm font-black text-gray-700">{t("totalCapacity")}</label>
           <input
             id="capacity"
             type="number"
@@ -100,8 +102,8 @@ export default function SettingsPage() {
         </section>
 
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="text-base font-black text-gray-900">आज की फसल दरें (₹ / क्विंटल)</h2>
-          <p className="mt-1 text-sm font-semibold text-gray-600">यह दरें तोल स्क्रीन में स्वतः दिखाई जाती हैं — यहाँ बदलाव से नई गणना पर असर पड़ेगा।</p>
+          <h2 className="text-base font-black text-gray-900">{t("cropRates")}</h2>
+          <p className="mt-1 text-sm font-semibold text-gray-600">{t("rateDescription")}</p>
           <div className="mt-4">
             {rates.map((rate, index) => (
               <div key={rate.crop} className="flex min-h-20 items-center justify-between gap-6 border-b border-neutral-200 py-4 last:border-0">
