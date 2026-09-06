@@ -5,11 +5,24 @@ import { useLanguage } from "@/lib/i18n";
 
 export default function LanguageSwitcher() {
     const { language, setLanguage } = useLanguage();
-    
-    // Default fallback (Bina backend ke yeh dikhega)
-    const [langs, setLangs] = useState([
+    const [langs, setLangs] = useState<Array<{ code: string; label: string }>>([
         { code: "hi", label: "हिन्दी" },
-        { code: "en", label: "English" }
+        { code: "en", label: "English" },
+        { code: "pa", label: "ਪੰਜਾਬੀ" },
+        { code: "bho", label: "भोजपुरी" },
+        { code: "mr", label: "मराठी" },
+        { code: "gu", label: "ગુજરાતી" },
+        { code: "bn", label: "বাংলা" },
+        { code: "te", label: "తెలుగు" },
+        { code: "ta", label: "தமிழ்" },
+        { code: "kn", label: "ಕನ್ನಡ" },
+        { code: "ml", label: "മലയാളം" },
+        { code: "or", label: "ଓଡ଼ିଆ" },
+        { code: "as", label: "অসমীয়া" },
+        { code: "ur", label: "اردو" },
+        { code: "mai", label: "मैथिली" },
+        { code: "raj", label: "राजस्थानी" },
+        { code: "hr", label: "हरियाणवी" },
     ]);
 
     useEffect(() => {
@@ -17,23 +30,18 @@ export default function LanguageSwitcher() {
 
         const fetchLanguages = async () => {
             try {
-                // Apna aap backend URL uthayega Vercel se
-                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "";
+                const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://kisan-q-backend.onrender.com";
                 if (!apiUrl) return;
 
                 const response = await fetch(`${apiUrl}/api/languages`, { signal: controller.signal });
                 if (response.ok) {
                     const data = await response.json();
                     if (Array.isArray(data) && data.length > 0) {
-                        const supportedLanguages = data.filter(
+                        const backendLanguages = data.filter(
                             (item): item is { code: string; label: string } =>
-                                typeof item?.code === "string" &&
-                                typeof item?.label === "string" &&
-                                ["hi", "en"].includes(item.code),
+                                typeof item?.code === "string" && typeof item?.label === "string",
                         );
-                        if (supportedLanguages.length > 0) {
-                            setLangs(supportedLanguages);
-                        }
+                        if (backendLanguages.length > 0) setLangs(backendLanguages);
                     }
                 }
             } catch {
