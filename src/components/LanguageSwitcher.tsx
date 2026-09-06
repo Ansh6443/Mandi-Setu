@@ -1,7 +1,8 @@
 "use client";
 import { Translate } from "@phosphor-icons/react";
 import { useState, useEffect } from "react";
-import { useLanguage } from "@/lib/i18n"; 
+import { useLanguage } from "@/lib/i18n";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export default function LanguageSwitcher() {
     const { language, setLanguage } = useLanguage();
@@ -24,6 +25,16 @@ export default function LanguageSwitcher() {
         { code: "raj", label: "राजस्थानी" },
         { code: "hr", label: "हरियाणवी" },
     ]);
+
+    const handleLanguageChange = (newLanguage: string) => {
+        setLanguage(newLanguage);
+        try {
+            window.localStorage.setItem(STORAGE_KEYS.language, newLanguage);
+        } catch {
+            // Continue with the in-memory language when storage is unavailable.
+        }
+        window.location.reload();
+    };
 
     useEffect(() => {
         const controller = new AbortController();
@@ -60,7 +71,7 @@ export default function LanguageSwitcher() {
             <Translate size={20} className="text-green-700" aria-hidden="true" />
             <select
                 value={language}
-                onChange={(e) => setLanguage(e.target.value)}
+                onChange={(e) => handleLanguageChange(e.target.value)}
                 className="bg-transparent text-gray-800 text-sm font-medium outline-none cursor-pointer appearance-none pr-2"
             >
                 {langs.map((l) => (
