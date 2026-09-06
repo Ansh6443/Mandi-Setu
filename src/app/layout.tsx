@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Manrope, Noto_Sans_Devanagari, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
-import AutoTranslator from "@/components/AutoTranslator";
+import AutoTranslator from "@/components/layout/AutoTranslator";
 import VoiceAssistantFab from "@/components/VoiceAssistantFab";
 import WheatCorner from "@/components/WheatCorner";
 

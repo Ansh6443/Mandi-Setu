@@ -51,7 +51,6 @@ export default function AutoTranslator() {
         originalTextMap.set(node, node.textContent || "");
       }
       const sourceText = originalTextMap.get(node)!.trim();
-      // Keep translations already rendered by the local i18n dictionary.
       const currentText = node.textContent?.trim() || "";
       if (language !== "hi" && sourceText && currentText === sourceText) {
         targetNodes.push(node);
@@ -85,7 +84,6 @@ export default function AutoTranslator() {
         targetNodes.forEach((n) => {
           const original = originalTextMap.get(n)?.trim();
           const translated = original ? dict[original]?.trim() : "";
-          // Do not replace text when the backend falls back to the source string.
           if (original && translated && translated !== original) {
             const raw = originalTextMap.get(n)!;
             n.textContent = raw.replace(original, translated);
