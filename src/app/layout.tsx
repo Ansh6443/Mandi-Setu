@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Manrope, Noto_Sans_Devanagari, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
+import AutoTranslator from "@/components/AutoTranslator";
 import VoiceAssistantFab from "@/components/VoiceAssistantFab";
 import WheatCorner from "@/components/WheatCorner";
 
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html lang="hi" className={`${geistSans.variable} ${geistMono.variable} ${spaceGrotesk.variable} ${manrope.variable} ${notoSansDevanagari.variable}`}>
       <body style={{ position: 'relative', minHeight: '100vh' }}>
         <LanguageProvider>
+          <AutoTranslator />
           {children}
           <VoiceAssistantFab />
           <WheatCorner />
