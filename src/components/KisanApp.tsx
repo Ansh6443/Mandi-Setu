@@ -1,10 +1,11 @@
 "use client";
 
-import { Bell, CalendarBlank, Check, CaretRight, CreditCard, House, Leaf, LockKey, MapPin, Phone, Plant, Plus, ShieldCheck, SignOut, SpeakerHigh, CheckCircle, User } from "@phosphor-icons/react";
+import { Bell, CalendarBlank, Check, CaretRight, CreditCard, House, Leaf, LockKey, MapPin, Phone, Plus, ShieldCheck, SignOut, SpeakerHigh, CheckCircle, User } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/lib/i18n";
+import { DEMO_FARMER_ID, receiptStorageKey } from "@/lib/storage-keys";
 
 type AuthStep = "mobile" | "mobileOtp" | "identity" | "identityOtp";
 type ViewName = "home" | "book" | "status" | "payment" | "profile" | "receipt" | "identity" | "identityOtp";
@@ -76,7 +77,7 @@ export default function KisanApp() {
   const [mobileOtp, setMobileOtp] = useState("");
   const [selectedMethod, setSelectedMethod] = useState<"aadhaar" | "farmer">("aadhaar");
   const [aadhaar, setAadhaar] = useState("");
-  const [farmerId, setFarmerId] = useState("MH-26032-4812");
+  const [farmerId, setFarmerId] = useState(DEMO_FARMER_ID);
   const [aadhaarConsent, setAadhaarConsent] = useState(false);
   const [farmerConsent, setFarmerConsent] = useState(false);
   const [identityOtp, setIdentityOtp] = useState("");
@@ -90,29 +91,31 @@ export default function KisanApp() {
   const [bookingDone, setBookingDone] = useState(false);
   const [receiptPhoto, setReceiptPhoto] = useState<string | null>(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  // यह identifier officer के farmer.bookingId से बिल्कुल समान होना MUST है, तभी receipt मिल पाएगी।
+  const receiptKey = receiptStorageKey(farmerId);
 
   useEffect(() => {
-    if (currentView !== "receipt") return;
-
-    const readReceiptPhoto = () => {
+    const readReceiptPhoto = (storedValue: string | null) => {
       try {
-        const storedReceipt = window.localStorage.getItem("kisan-setu-weighment-receipt");
-        const receipt = storedReceipt ? JSON.parse(storedReceipt) as { photo?: string } : null;
+        const receipt = storedValue ? JSON.parse(storedValue) as { photo?: string } : null;
         setReceiptPhoto(receipt?.photo ?? null);
       } catch {
         setReceiptPhoto(null);
       }
     };
 
-    readReceiptPhoto();
-    window.addEventListener("storage", readReceiptPhoto);
-    const refreshTimer = window.setInterval(readReceiptPhoto, 500);
+    // 화면을 새로 열거나 새로고침해도 현재 किसान की saved receipt पढ़ी जाएगी।
+    if (currentView === "receipt") readReceiptPhoto(window.localStorage.getItem(receiptKey));
+    const handleReceiptStorage = (event: StorageEvent) => {
+      // केवल इसी किसान की key बदलने पर J-Form की फोटो update होगी।
+      if (event.key === receiptKey) readReceiptPhoto(event.newValue);
+    };
+    window.addEventListener("storage", handleReceiptStorage);
 
     return () => {
-      window.removeEventListener("storage", readReceiptPhoto);
-      window.clearInterval(refreshTimer);
+      window.removeEventListener("storage", handleReceiptStorage);
     };
-  }, [currentView]);
+  }, [currentView, receiptKey]);
 
   const validMobile = mobile.replace(/\D/g, "").length === 10;
   const validOtp = mobileOtp.replace(/\D/g, "").length === 6;
@@ -121,9 +124,10 @@ export default function KisanApp() {
   const validIdentityOtp = identityOtp.replace(/\D/g, "").length === 6;
 
   const openReceipt = () => {
+    // openReceipt केवल scoped key पढ़ता है; यह कभी localStorage clear नहीं करता।
     setReceiptPhoto(null);
     try {
-      const storedReceipt = window.localStorage.getItem("kisan-setu-weighment-receipt");
+      const storedReceipt = window.localStorage.getItem(receiptKey);
       if (storedReceipt) {
         const receipt = JSON.parse(storedReceipt) as { photo?: string };
         setReceiptPhoto(receipt.photo ?? null);
@@ -511,6 +515,7 @@ export default function KisanApp() {
               {marketRates.map((rate) => (
                 <div key={rate.crop} className="rate-card">
                   <span className="rate-crop-icon" aria-hidden="true">{cropIcons[rate.key]}</span>
+                  <div className="rate-crop-name">{rate.crop}</div>
                   <div className="rate-price">{rate.price}</div>
                   <div className={`rate-change ${rate.up ? "up" : "down"}`}>{rate.up ? "▲" : "▼"} {rate.change}</div>
                 </div>
@@ -520,7 +525,9 @@ export default function KisanApp() {
             {!bookingDone ? (
               <div className="empty-card">
                 <div className="empty-badge">● {t("noBooking")}</div>
-                <div className="empty-icon"><Plant size={34} weight="regular" aria-hidden="true" /></div>
+                <div className="empty-icon">
+                  <Image src="/mandi-setu-logo.svg" alt="किसान लोगो" width={54} height={54} />
+                </div>
                 <h3>{t("noBooking")}</h3>
                 <p>{t("bookPrompt")}</p>
                 <button className="primary-btn" onClick={() => setCurrentView("book")}>{t("bookNewSlot")}</button>

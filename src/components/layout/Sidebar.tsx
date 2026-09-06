@@ -12,6 +12,7 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 const menuItems = [
   { label: "डैशबोर्ड", href: "/officer/dashboard", icon: SquaresFour },
@@ -28,7 +29,7 @@ export default function Sidebar() {
 
   function handleLogout() {
     try {
-      window.localStorage.removeItem("officer-authenticated");
+      window.localStorage.removeItem(STORAGE_KEYS.officerAuthenticated);
     } catch {
       // Continue to the login route if browser storage is unavailable.
     }

@@ -4,14 +4,16 @@ import { Clock, MapPin } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import VoiceSOSButton from "@/components/farmer/VoiceSOSButton";
+import { DEMO_FARMER_ID, receiptStorageKey } from "@/lib/storage-keys";
 
 export default function FarmerReceiptPage() {
   const [receiptPhoto, setReceiptPhoto] = useState<string | null>(null);
+  const receiptKey = receiptStorageKey(DEMO_FARMER_ID);
 
   useEffect(() => {
     const readReceiptPhoto = () => {
       try {
-        const storedReceipt = window.localStorage.getItem("kisan-setu-weighment-receipt");
+        const storedReceipt = window.localStorage.getItem(receiptKey);
         const receipt = storedReceipt ? JSON.parse(storedReceipt) as { photo?: string } : null;
         setReceiptPhoto(receipt?.photo ?? null);
       } catch {
@@ -27,7 +29,7 @@ export default function FarmerReceiptPage() {
       window.removeEventListener("storage", readReceiptPhoto);
       window.clearInterval(refreshTimer);
     };
-  }, []);
+  }, [receiptKey]);
 
   return (
     <main className="min-h-screen bg-slate-50 p-4">

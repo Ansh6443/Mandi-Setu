@@ -1,5 +1,6 @@
 "use client";
 import { createContext, startTransition, useContext, useEffect, useState } from "react";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 // Aapki default dictionary (Jab tak backend connect na ho, yeh kaam aayegi)
 const defaultTranslations: Record<string, Record<string, string>> = {
@@ -41,14 +42,14 @@ const defaultTranslations: Record<string, Record<string, string>> = {
     verified: "Verified", farmerIdLabel: "FARMER ID", bankLinked: "NPCI / बैंक लिंक सक्रिय",
     closeAccount: "खाता बंद करें (Logout)", registered: "रजिस्टर्ड", checkIn: "मंडी चेक-इन",
     qualityWeight: "क्वालिटी जाँच और वज़न", auctionApproved: "नीलामी / स्वीकृत", dbtPayment: "DBT भुगतान",
-    services: "सुविधाएं", officer: "अधिकारी", openApp: "लॉगिन / ऐप खोलें", brand: "किसान साथी",
+    services: "सुविधाएं", officer: "अधिकारी", openApp: "किसान ऐप", brand: "मंडी सेतु",
     brandSubtitle: "स्मार्ट मंडी प्रोक्योरमेंट पोर्टल", speak: "बोलकर सुनें",
     heroBadge: "PS 26032 • Ministry of Consumer Affairs, Food & Public Distribution",
     heroTitle: "बिना मंडी गए, अपनी बारी जानें।",
     heroSubtitle: "सरकारी मंडी में MSP पर बेचें — स्लॉट बुक करें, लाइव कतार देखें, सीधा भुगतान पाएं।",
     connectedMandis: "मंडियां जुड़ीं", waitReduction: "औसत प्रतीक्षा में कमी",
     availableLanguages: "भाषाएं उपलब्ध", prototypeEstimate: "(प्रोटोटाइप अनुमान)",
-    farmerApp: "किसान ऐप खोलें (Farmer App)", officerPortal: "मंडी अधिकारी व्यू (Officer Portal)",
+    farmerApp: "किसान ऐप खोलें", officerPortal: "अधिकारी पोर्टल",
     liveCentres: "लाइव — आज के केंद्र", updating: "अपडेट हो रहा है",
     sameBoard: "एक ही बोर्ड को तीन तरीकों से पढ़ें: PWA ऐप, SMS या गेट पर लगा डिस्प्ले।",
     mainServices: "हमारी मुख्य सुविधाएं", smartFarming: "स्मार्ट खेती, स्मार्ट व्यापार",
@@ -95,14 +96,14 @@ const defaultTranslations: Record<string, Record<string, string>> = {
     verified: "Verified", farmerIdLabel: "FARMER ID", bankLinked: "NPCI / Bank link active",
     closeAccount: "Close account (Logout)", registered: "Registered", checkIn: "Mandi check-in",
     qualityWeight: "Quality check and weighing", auctionApproved: "Auction / approved", dbtPayment: "DBT payment",
-    services: "Services", officer: "Officer", openApp: "Login / Open app", brand: "Kisan Saathi",
+    services: "Services", officer: "Officer", openApp: "Farmer App", brand: "Mandi Setu",
     brandSubtitle: "Smart mandi procurement portal", speak: "Listen aloud",
     heroBadge: "PS 26032 • Ministry of Consumer Affairs, Food & Public Distribution",
     heroTitle: "Know your turn, without visiting the mandi.",
     heroSubtitle: "Sell at MSP in a government mandi: book a slot, track the live queue, and get paid directly.",
     connectedMandis: "Connected mandis", waitReduction: "Average wait reduction",
     availableLanguages: "Languages available", prototypeEstimate: "(Prototype estimate)",
-    farmerApp: "Open Farmer App", officerPortal: "Mandi Officer Portal",
+    farmerApp: "Open Farmer App", officerPortal: "Officer Portal",
     liveCentres: "LIVE — TODAY'S CENTRES", updating: "Updating",
     sameBoard: "One board, three ways to read it: the PWA app, SMS, or the physical display at the gate.",
     mainServices: "Our core services", smartFarming: "Smarter farming, smarter trade",
@@ -127,7 +128,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     try {
-      const savedLanguage = window.localStorage.getItem("kisan-setu-language");
+      const savedLanguage = window.localStorage.getItem(STORAGE_KEYS.language);
       if (savedLanguage) startTransition(() => setLanguage(savedLanguage));
     } catch {
       // Keep the default language when storage is unavailable.
@@ -137,7 +138,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   // AUTOMATIC BACKEND FETCH LOGIC
   useEffect(() => {
     try {
-      window.localStorage.setItem("kisan-setu-language", language);
+      window.localStorage.setItem(STORAGE_KEYS.language, language);
     } catch {
       // Continue rendering when storage is unavailable.
     }

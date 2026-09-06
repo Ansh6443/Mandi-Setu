@@ -4,6 +4,7 @@ import { CheckCircle, Scales } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useEffect } from "react";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 const farmer = {
   name: "रमेश पवार",
@@ -12,7 +13,7 @@ const farmer = {
 };
 
 const defaultMspRates: Record<string, number> = { प्याज: 1850 };
-const ratesStorageKey = "kisan-setu-msp-rates";
+const ratesStorageKey = STORAGE_KEYS.mspRates;
 
 export default function WeighmentPanel() {
   const router = useRouter();

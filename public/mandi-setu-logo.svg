@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 354 260" role="img" aria-labelledby="title desc">
+  <title id="title">किसान लोगो</title>
+  <desc id="desc">किसान और मंडी का प्रतीक चिन्ह</desc>
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M16 224h322" stroke="#00522c" stroke-width="18"/>
+    <path d="M86 215V62M258 215V62" stroke="#00522c" stroke-width="18"/>
+    <path d="M8 206 86 42l80 164L258 42l80 164" stroke="#2e8b36" stroke-width="15"/>
+    <path d="M126 215V105M218 215V105" stroke="#2e8b36" stroke-width="10"/>
+    <path d="m166 217-19-42q-7-16 9-28 16 12 9 28z" fill="#d99d2b" stroke="#d99d2b" stroke-width="5"/>
+  </g>
+</svg>

@@ -4,9 +4,11 @@ import { Camera, CheckCircle, Scales, WarningCircle } from "@phosphor-icons/reac
 import Image from "next/image";
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { DEMO_FARMER_ID, STORAGE_KEYS, receiptStorageKey } from "@/lib/storage-keys";
 const farmer = {
   name: "रमेश पवार",
-  bookingId: "MH-26032-3390",
+  // किसान ऐप के Farmer ID से यही पहचान मिलनी चाहिए, तभी दोनों तरफ एक ही रसीद खुलेगी।
+  bookingId: DEMO_FARMER_ID,
   commodity: "प्याज",
 };
 
@@ -20,7 +22,9 @@ const MSP_RATE: Record<string, number> = {
   टमाटर: 1000,
 };
 
-const ratesStorageKey = "kisan-setu-msp-rates";
+const ratesStorageKey = STORAGE_KEYS.mspRates;
+// यह identifier KisanApp के farmerId से बिल्कुल समान होना MUST है, तभी receipt मिल पाएगी।
+const receiptKey = receiptStorageKey(farmer.bookingId);
 
 export default function LiveWeighmentPanel() {
   const router = useRouter();
@@ -57,10 +61,6 @@ export default function LiveWeighmentPanel() {
     return () => window.removeEventListener("storage", readRates);
   }, []);
 
-  useEffect(() => {
-    window.localStorage.removeItem("kisan-setu-weighment-receipt");
-  }, []);
-
   function handlePhotoCapture(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
@@ -76,11 +76,6 @@ export default function LiveWeighmentPanel() {
     reader.onload = () => {
       if (typeof reader.result !== "string") return;
       setPhotoPreview(reader.result);
-      window.localStorage.setItem("kisan-setu-weighment-receipt", JSON.stringify({
-        photo: reader.result,
-        farmer: farmer.name,
-        commodity: farmer.commodity,
-      }));
     };
     reader.readAsDataURL(file);
     event.target.value = "";
@@ -88,17 +83,20 @@ export default function LiveWeighmentPanel() {
 
   function handleSubmitWeighment() {
     if (!canSubmit) return;
+    // photo upload के समय नहीं, केवल सफल submit पर किसान की रसीद save होगी।
+    const submissionTime = new Date().toLocaleString("hi-IN");
     setSubmitted(true);
-    setSubmittedAt(new Date().toLocaleString("hi-IN"));
+    setSubmittedAt(submissionTime);
     if (photoPreview) {
       try {
-        window.localStorage.setItem("kisan-setu-weighment-receipt", JSON.stringify({
+        window.localStorage.setItem(receiptKey, JSON.stringify({
           photo: photoPreview,
           farmer: farmer.name,
+          bookingId: farmer.bookingId,
           commodity: farmer.commodity,
           weight,
           amount,
-          submittedAt: new Date().toLocaleString("hi-IN"),
+          submittedAt: submissionTime,
         }));
       } catch {
         // The submission can still complete when browser storage is unavailable.
@@ -175,7 +173,14 @@ export default function LiveWeighmentPanel() {
 
         <div>
           <label htmlFor="estimated-amount" className="mb-2 block text-sm font-bold text-gray-700">अनुमानित राशि (₹)</label>
-          <input id="estimated-amount" type="text" value={amount ? `₹ ${amount.toLocaleString("en-IN")}` : "₹ 0"} readOnly disabled={submitted} className="h-14 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 font-bold text-gray-700 outline-none" />
+          <input
+            id="estimated-amount"
+            type="text"
+            value={amount ? `₹ ${amount.toLocaleString("en-IN")}` : "₹ 0"}
+            readOnly
+            disabled={submitted}
+            className="h-14 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 font-bold text-gray-700 outline-none"
+          />
         </div>
 
         {submittedAt && <p className="text-xs font-semibold text-gray-500">दर्ज समय: {submittedAt}</p>}

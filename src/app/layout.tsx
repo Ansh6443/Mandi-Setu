@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Manrope, Noto_Sans_Devanagari, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import { LanguageProvider } from "@/lib/i18n";
+import VoiceAssistantFab from "@/components/VoiceAssistantFab";
 import WheatCorner from "@/components/WheatCorner";
 
 const geistSans = Geist({
@@ -33,7 +34,7 @@ const notoSansDevanagari = Noto_Sans_Devanagari({
 });
 
 export const metadata: Metadata = {
-  title: "Kisan Setu | Smart Market Procurement Portal",
+  title: "Mandi Setu | Smart Market Procurement Portal",
   description: "A farmer and officer portal for transparent mandi queue management and digital procurement flows.",
 };
 
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body style={{ position: 'relative', minHeight: '100vh' }}>
         <LanguageProvider>
           {children}
+          <VoiceAssistantFab />
           <WheatCorner />
         </LanguageProvider>
       </body>

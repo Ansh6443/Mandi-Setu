@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
-const ratesStorageKey = "kisan-setu-msp-rates";
+const ratesStorageKey = STORAGE_KEYS.mspRates;
 
 const initialRates = [
   { crop: "प्याज", value: "1850" },

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/layout/Sidebar";
 import { House } from "@phosphor-icons/react";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export default function OfficerAppLayout({
   children,
@@ -18,7 +19,7 @@ export default function OfficerAppLayout({
   useEffect(() => {
     let authenticated = false;
     try {
-      authenticated = window.localStorage.getItem("officer-authenticated") === "true";
+      authenticated = window.localStorage.getItem(STORAGE_KEYS.officerAuthenticated) === "true";
     } catch {
       authenticated = false;
     }

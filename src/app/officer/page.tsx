@@ -4,6 +4,7 @@ import { CalendarCheck, CheckCircle, ChartLineUp, Clock, MicrophoneStage, Speake
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 type QueueEntry = {
   name: string;
@@ -36,7 +37,7 @@ export default function OfficerPage() {
   useEffect(() => {
     let authenticated = false;
     try {
-      authenticated = window.localStorage.getItem("officer-authenticated") === "true";
+      authenticated = window.localStorage.getItem(STORAGE_KEYS.officerAuthenticated) === "true";
     } catch {
       authenticated = false;
     }

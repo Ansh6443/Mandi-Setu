@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import {
   ArrowRight,
   Bank,
   CalendarBlank,
-  Leaf,
   Phone,
-  Sparkle,
   TrendUp,
 } from "@phosphor-icons/react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
@@ -58,27 +57,31 @@ export default function HomePage() {
         </div>
 
         <div className="gov-right">
-          <span className="voice-link">
-            <Sparkle size={15} />
-            {t("speak")}
-          </span>
           <span className="phone-link">
-            <Phone size={15} />
-            080 4749 5548
+            <span className="phone-icon">
+              <Phone size={15} />
+            </span>
+            095138 86363
           </span>
+          <LanguageSwitcher />
         </div>
       </div>
 
       <header className="site-header">
         <div className="nav-container">
-          <Link href="/" className="brand" aria-label="Kisan Setu home">
-            <div className="brand-mark">
-              <Leaf size={20} />
-            </div>
-            <div>
-              <div className="brand-name">{t("brand")}</div>
-              <div className="brand-subtitle">{t("brandSubtitle")}</div>
-            </div>
+          <Link href="/" className="brand" aria-label="Mandi Setu home">
+            <Image
+              src="/mandi-setu-logo.svg"
+              alt="मंडी सेतु लोगो"
+              width={62}
+              height={46}
+              priority
+              className="brand-logo"
+            />
+            <span className="brand-copy">
+              <span className="brand-name">मंडी सेतु</span>
+              <span className="brand-subtitle">स्मार्ट मंडी प्रोक्योरमेंट पोर्टल</span>
+            </span>
           </Link>
 
           <nav className="nav-links" aria-label="Main navigation">
@@ -87,7 +90,7 @@ export default function HomePage() {
             <Link href="/officer/login">{t("officer")}</Link>
           </nav>
 
-          <div className="header-actions"><LanguageSwitcher /><Link href="/farmer" className="btn-primary header-button">{t("openApp")}</Link></div>
+          <div className="header-actions"><Link href="/farmer" className="btn-primary header-button">{t("openApp")}</Link></div>
         </div>
       </header>
 
@@ -104,15 +107,6 @@ export default function HomePage() {
               {t("heroSubtitle")}
             </p>
 
-            <div className="trust-strip">
-              {trustStats.map(({ value, label }, index) => (
-                <div key={label} className={`trust-stat${index > 0 ? " with-divider" : ""}`}>
-                  <strong>{value}</strong>
-                  <span>{t(label)}</span>
-                </div>
-              ))}
-            </div>
-
             <div className="cta-row">
               <Link href="/farmer" className="btn-primary cta-button">
                 {t("farmerApp")}
@@ -122,6 +116,15 @@ export default function HomePage() {
               <Link href="/officer/login" className="btn-secondary cta-button">
                 {t("officerPortal")}
               </Link>
+            </div>
+
+            <div className="trust-strip">
+              {trustStats.map(({ value, label }, index) => (
+                <div key={label} className={`trust-stat${index > 0 ? " with-divider" : ""}`}>
+                  <strong>{value}</strong>
+                  <span>{t(label)}</span>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -139,7 +142,7 @@ export default function HomePage() {
     <span className="queue-name" style={{ flex: 1 }}>{item.name}</span>
     <span className="queue-token" style={{ flex: 1, textAlign: 'center' }}>{item.token}</span>
     <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>
-      {language === "hi" ? `${item.waitMinutes} मिनट औसत प्रतीक्षा` : `${item.waitMinutes} min avg wait`}
+      {language === "hi" ? `${item.waitMinutes} मिनट प्रतीक्षा` : `${item.waitMinutes} min wait`}
     </span>
   </div>
 ))}
@@ -167,7 +170,7 @@ export default function HomePage() {
       </main>
 
       <footer className="site-footer">
-        <div className="footer-brand">किसान साथी — SIH 26032</div>
+        <div className="footer-brand">मंडी सेतु — SIH 26032</div>
         <div>{t("footer")}</div>
       </footer>
     </div>

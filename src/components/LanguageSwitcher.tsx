@@ -40,7 +40,7 @@ export default function LanguageSwitcher() {
     }, []);
 
     return (
-        <label className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:border-green-500 focus-within:ring-2 focus-within:ring-green-600 cursor-pointer transition-colors">
+        <label className="language-switcher flex items-center gap-2 px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm hover:border-green-500 focus-within:ring-2 focus-within:ring-green-600 cursor-pointer transition-colors">
             <Translate size={20} className="text-green-700" aria-hidden="true" />
             <select
                 value={language}

@@ -3,6 +3,7 @@
 import { LockKey } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
+import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export default function OfficerLoginPage() {
   const router = useRouter();
@@ -11,7 +12,7 @@ export default function OfficerLoginPage() {
   function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     try {
-      window.localStorage.setItem("officer-authenticated", "true");
+      window.localStorage.setItem(STORAGE_KEYS.officerAuthenticated, "true");
     } catch {
       // The guard will redirect back if browser storage is unavailable.
     }
