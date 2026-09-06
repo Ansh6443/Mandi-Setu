@@ -1881,6 +1881,21 @@ body {
   box-shadow: 0 0 0 4px rgba(224, 159, 62, 0.15);
 }
 
+.timeline:not(.compact) .timeline-item:not(:last-child)::after {
+  position: absolute;
+  top: 21px;
+  bottom: -21px;
+  left: 5px;
+  width: 2px;
+  background: #d9e0e4;
+  content: "";
+  z-index: 0;
+}
+
+.timeline:not(.compact) .timeline-item.active:not(:last-child)::after {
+  background: #e09f3e;
+}
+
 .timeline-item.done .timeline-dot {
   background: #287a4b;
 }
@@ -1893,6 +1908,8 @@ body {
   margin-top: 3px;
   background: #d9e0e4;
   border: 2px solid #ffffff;
+  position: relative;
+  z-index: 1;
 }
 
 .timeline-item p {
