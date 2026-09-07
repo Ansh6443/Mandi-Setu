@@ -16,13 +16,17 @@ interface SpeechRecognitionResultEvent extends Event {
   };
 }
 
+interface SpeechRecognitionErrorEvent extends Event {
+  error?: string;
+}
+
 interface SpeechRecognitionInstance {
   lang: string;
   continuous: boolean;
   interimResults: boolean;
   onstart: (() => void) | null;
   onresult: ((event: SpeechRecognitionResultEvent) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event: SpeechRecognitionErrorEvent) => void) | null;
   onend: (() => void) | null;
   start: () => void;
 }
@@ -42,6 +46,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const startListening = () => {
     const speechWindow = window as SpeechRecognitionWindow;
@@ -53,7 +58,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
     }
 
     const recognition = new SpeechRecognition();
-    recognition.lang = language === "hi" ? "hi-IN" : language === "kn" ? "kn-IN" : "en-IN";
+    recognition.lang = "hi-IN";
     recognition.continuous = false;
     recognition.interimResults = false;
 
@@ -66,29 +71,40 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
       await askAssistant(userSpeech);
     };
 
-    recognition.onerror = () => setIsListening(false);
+    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+      setIsListening(false);
+      const errorMessage = event.error === "no-speech"
+        ? "माफ़ कीजिए, कोई आवाज़ नहीं सुनाई दी। कृपया दोबारा बोलिए।"
+        : event.error === "not-allowed"
+          ? "माइक्रोफ़ोन की अनुमति नहीं मिली। कृपया ब्राउज़र सेटिंग्स में माइक्रोफ़ोन चालू करें।"
+          : "नेटवर्क में समस्या आ रही है। कृपया दोबारा प्रयास करें।";
+      setResponse(errorMessage);
+    };
     recognition.onend = () => setIsListening(false);
 
     recognition.start();
   };
 
   const speakResponse = (text: string) => {
-    if (!window.speechSynthesis) return;
+    if (!window.speechSynthesis) {
+      setIsSpeaking(false);
+      return;
+    }
 
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
-    const languageCode = language === "hi" ? "hi-IN" : language === "kn" ? "kn-IN" : "en-IN";
-    utterance.lang = languageCode;
+    utterance.lang = "hi-IN";
     utterance.rate = 1;
+    utterance.pitch = 1;
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
 
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find((voice) =>
-      language === "hi"
-        ? voice.lang.toLowerCase().includes("hi") || /swara|kalpana/i.test(voice.name)
-        : voice.lang.toLowerCase().startsWith(languageCode.slice(0, 2)),
-    );
+    const preferredVoice = voices.find((voice) => voice.lang.toLowerCase() === "hi-in")
+      ?? voices.find((voice) => /swara|kalpana|google हिन्दी/i.test(voice.name));
     if (preferredVoice) utterance.voice = preferredVoice;
 
+    setIsSpeaking(true);
     window.speechSynthesis.speak(utterance);
   };
 
@@ -173,27 +189,29 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
           fontSize: "0.95rem"
         }}>
           {transcript && <p style={{ margin: "0 0 0.5rem 0", color: "#374151" }}><strong>You:</strong> {transcript}</p>}
-          {isLoading && <p style={{ margin: 0, color: "#6b7280" }}>Gemini is thinking...</p>}
+          {isLoading && <p style={{ margin: 0, color: "#6b7280" }}>सोच रही हूँ... (Processing)</p>}
           {response && <p style={{ margin: 0, color: "#065f46" }}><strong>Sahayak:</strong> {response}</p>}
-          {!transcript && !isLoading && !response && (
-            <p style={{ margin: 0, color: "#9ca3af" }}>Tap the microphone to speak your query...</p>
+          {!transcript && !isLoading && !response && !isSpeaking && (
+            <p style={{ margin: 0, color: "#9ca3af" }}>बोलने के लिए माइक्रोफ़ोन दबाएँ।</p>
           )}
+          {isSpeaking && <p style={{ margin: 0, color: "#065f46" }}>बोल रही हूँ... (Speaking)</p>}
         </div>
 
         <button
           onClick={startListening}
-          disabled={isListening || isLoading}
+          disabled={isListening || isLoading || isSpeaking}
+          className={isListening ? "voice-listening-pulse" : undefined}
           style={{
             padding: "0.75rem",
-            backgroundColor: isListening ? "#dc2626" : "#059669",
+            backgroundColor: isListening || isSpeaking ? "#dc2626" : "#059669",
             color: "#ffffff",
             border: "none",
             borderRadius: "8px",
             fontWeight: 600,
-            cursor: isListening ? "default" : "pointer"
+            cursor: isListening || isSpeaking ? "default" : "pointer"
           }}
         >
-          {isListening ? "Listening..." : "Tap to Speak"}
+          {isListening ? "सुन रही हूँ... (Listening)" : isSpeaking ? "बोल रही हूँ... (Speaking)" : "Tap to Speak"}
         </button>
       </div>
     </div>
