@@ -132,12 +132,8 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
     setIsLoading(true);
     setStatus("सोच रही हूँ... (Processing)");
 
-    // URL resolution: hamesha /ask endpoint par point karega
-    const rawBase = process.env.NEXT_PUBLIC_BACKEND_URL || "https://kisan-q-backend.onrender.com";
-    const backendUrl = rawBase.endsWith("/ask")
-      ? rawBase
-      : `${rawBase.replace(/\/+$/, "")}/ask`;
-
+    // Render URL locked (no .env override)
+    const backendUrl = "https://kisan-q-backend.onrender.com/ask";
     try {
       const res = await fetch(backendUrl, {
         method: "POST",
