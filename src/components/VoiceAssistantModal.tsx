@@ -72,6 +72,26 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
     recognition.start();
   };
 
+  const speakResponse = (text: string) => {
+    if (!window.speechSynthesis) return;
+
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    const languageCode = language === "hi" ? "hi-IN" : language === "kn" ? "kn-IN" : "en-IN";
+    utterance.lang = languageCode;
+    utterance.rate = 1;
+
+    const voices = window.speechSynthesis.getVoices();
+    const preferredVoice = voices.find((voice) =>
+      language === "hi"
+        ? voice.lang.toLowerCase().includes("hi") || /swara|kalpana/i.test(voice.name)
+        : voice.lang.toLowerCase().startsWith(languageCode.slice(0, 2)),
+    );
+    if (preferredVoice) utterance.voice = preferredVoice;
+
+    window.speechSynthesis.speak(utterance);
+  };
+
   const askAssistant = async (query: string) => {
     setIsLoading(true);
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://kisan-q-backend.onrender.com";
@@ -103,13 +123,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
         throw new Error("Voice assistant returned an empty response.");
       }
       setResponse(reply);
-
-      // Speak back the response
-      if ("speechSynthesis" in window) {
-        const utterance = new SpeechSynthesisUtterance(reply);
-        utterance.lang = language === "hi" ? "hi-IN" : "en-IN";
-        window.speechSynthesis.speak(utterance);
-      }
+      speakResponse(reply);
     } catch (error) {
       setResponse(error instanceof Error ? error.message : "Voice assistant is unavailable. Please try again.");
     } finally {
