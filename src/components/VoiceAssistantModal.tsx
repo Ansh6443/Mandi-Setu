@@ -86,8 +86,22 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
           lang: language,
         }),
       });
-      const data = await res.json();
-      const reply = data.reply || data.response || data.message || data.text || "No response received.";
+      const data = (await res.json().catch(() => ({}))) as {
+        reply?: string;
+        response?: string;
+        message?: string;
+        text?: string;
+        error?: string;
+      };
+
+      if (!res.ok) {
+        throw new Error(data.error || `Voice assistant service returned ${res.status}.`);
+      }
+
+      const reply = data.reply || data.response || data.message || data.text;
+      if (!reply) {
+        throw new Error("Voice assistant returned an empty response.");
+      }
       setResponse(reply);
 
       // Speak back the response
@@ -96,8 +110,8 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
         utterance.lang = language === "hi" ? "hi-IN" : "en-IN";
         window.speechSynthesis.speak(utterance);
       }
-    } catch {
-      setResponse("Server connection failed. Please try again.");
+    } catch (error) {
+      setResponse(error instanceof Error ? error.message : "Voice assistant is unavailable. Please try again.");
     } finally {
       setIsLoading(false);
     }
