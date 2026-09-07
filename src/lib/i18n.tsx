@@ -194,11 +194,36 @@ const landingOverrides: Record<string, Record<string, string>> = {
   mai: { heroTitle: "मंडी नहि जाइ अपन पारी जानू।", heroSubtitle: "सरकारी मंडी में MSP पर बेचू — स्लॉट बुक करू, लाइव कतार देखू आ सीधा भुगतान पाउ।", connectedMandis: "जुड़ल मंडी", waitReduction: "औसत प्रतीक्षा में कमी", availableLanguages: "उपलब्ध भाषा", mainServices: "हमर मुख्य सुविधा", smartFarming: "स्मार्ट खेती, स्मार्ट व्यापार", booking: "स्मार्ट स्लॉट बुकिंग", bookingDescription: "घर सँ फसल बेचबाक दिन आ समय चुनू।", tracking: "लाइव स्थिति ट्रैकिंग", trackingDescription: "मंडी गेट सँ तौल आ गुणवत्ता जांच धरि सभ अपडेट पाउ।", payment: "DBT आ डिजिटल J-Form", paymentDescription: "नीलामीक बाद सीधा बैंक भुगतान पाउ।", liveCentres: "लाइव — आजुक केंद्र", updating: "अपडेट भऽ रहल अछि", sameBoard: "PWA ऐप, SMS वा गेट डिस्प्ले सँ एके बोर्ड पढ़ू।" }
 };
 
+const mandiNameTranslations: Record<string, Record<string, string>> = {
+  hi: { gorakhpurMandi: "गोरखपुर मंडी", lucknowMandi: "लखनऊ दुबग्गा मंडी", kanpurMandi: "कानपुर नवाबगंज मंडी", varanasiMandi: "वाराणसी मंडी समिति", ayodhyaMandi: "अयोध्या कृषि मंडी", minWait: "मिनट प्रतीक्षा" },
+  en: { gorakhpurMandi: "Gorakhpur Mandi", lucknowMandi: "Lucknow Dubagga Mandi", kanpurMandi: "Kanpur Nawabganj Mandi", varanasiMandi: "Varanasi Mandi Samiti", ayodhyaMandi: "Ayodhya Krishi Mandi", minWait: "min wait" },
+  pa: { gorakhpurMandi: "ਗੋਰਖਪੁਰ ਮੰਡੀ", lucknowMandi: "ਲਖਨੌ ਦੁਬਗ਼ਾ ਮੰਡੀ", kanpurMandi: "ਕਾਨਪੁਰ ਨਵਾਬਗੰਜ ਮੰਡੀ", varanasiMandi: "ਵਾਰਾਨਸੀ ਮੰਡੀ ਸਮੀਤ", ayodhyaMandi: "ਅਯੋਧਿਆ ਖੇਤੀ ਮੰਡੀ", minWait: "ਮਿੰਟ ਉਡੀਕ" },
+  bho: { gorakhpurMandi: "गोरखपुर मंडी", lucknowMandi: "लखनऊ दुबग्गा मंडी", kanpurMandi: "कानपुर नवाबगंज मंडी", varanasiMandi: "वाराणसी मंडी समिति", ayodhyaMandi: "अयोध्या कृषि मंडी", minWait: "मिनट इंतजार" },
+  mr: { gorakhpurMandi: "गोरखपूर मंडी", lucknowMandi: "लखनौ दुबग्गा मंडी", kanpurMandi: "कानपूर नवाबगंज मंडी", varanasiMandi: "वाराणसी मंडी समिती", ayodhyaMandi: "अयोध्या कृषी मंडी", minWait: "मिनिटे प्रतीक्षा" },
+  gu: { gorakhpurMandi: "ગોરખપુર મંડી", lucknowMandi: "લખનૌ દુબગા મંડી", kanpurMandi: "કાનપુર નવાબગંજ મંડી", varanasiMandi: "વારાણસી મંડી સમિતિ", ayodhyaMandi: "અયોધ્યા કૃષિ મંડી", minWait: "મિનિટ રાહ" },
+  bn: { gorakhpurMandi: "গোরখপুর মন্ডি", lucknowMandi: "লখনউ দুবগ্গা মন্ডি", kanpurMandi: "কানপুর নবাবগঞ্জ মন্ডি", varanasiMandi: "বারাণসী মন্ডি কমিটি", ayodhyaMandi: "অযোধ্যা কৃষি মন্ডি", minWait: "মিনিট অপেক্ষা" },
+  te: { gorakhpurMandi: "గోరఖ్‌పూర్ మండి", lucknowMandi: "లక్నో దుబగ్గ మండి", kanpurMandi: "కాన్పూర్ నవాబ్‌గంజ్ మండి", varanasiMandi: "వారణాసి మండీ సమితి", ayodhyaMandi: "అయోధ్య క్రిషి మండి", minWait: "నిమిషాల నిరీక్షణ" },
+  ta: { gorakhpurMandi: "கோரக்பூர் மண்டி", lucknowMandi: "லக்னோ துபக்கா மண்டி", kanpurMandi: "கான்பூர் நவாப்கஞ்ச் மண்டி", varanasiMandi: "வாரணாசி மண்டி சபை", ayodhyaMandi: "அயோத்தா க்ருஷி மண்டி", minWait: "நிமிட காத்திருப்பு" },
+  kn: { gorakhpurMandi: "ಗೋರಖ್ಪುರ ಮಂಟಿ", lucknowMandi: "ಲಖ್ನೌ ದುಬಗಾ ಮಂಟಿ", kanpurMandi: "ಕಾನ್ಪುರ ನವಾಬ್ಗಂಜ್ ಮಂಟಿ", varanasiMandi: "ವಾರಾಣಸಿ ಮಂಟಿ ಸಮಿತಿ", ayodhyaMandi: "ಅಯೋಧ್ಯ ಕೃಷಿ ಮಂಟಿ", minWait: "ನಿಮಿಷ ಕಾಯುವಿಕೆ" },
+  ml: { gorakhpurMandi: "ഗോരഖ്പൂർ മൺഡി", lucknowMandi: "ലഖ്നൗ ദുബഗ്ഗാ മൺഡി", kanpurMandi: "കാൻപുര് നവാബ്‌ഗഞ്ച് മൺഡി", varanasiMandi: "വാരാണസി മൺഡി സമിതി", ayodhyaMandi: "അയോധ്യ കൃഷി മൺഡി", minWait: "മിനിറ്റ് കാത്തിരിപ്പ്" },
+  or: { gorakhpurMandi: "ଗୋରଖପୁର ମଣ୍ଡି", lucknowMandi: "ଲକ୍ନୌ ଦୁବଗ୍ଗା ମଣ୍ଡି", kanpurMandi: "କାନପୁର ନବାବଗଞ୍ଜ ମଣ୍ଡି", varanasiMandi: "ବାରାଣସୀ ମଣ୍ଡି ସମିତି", ayodhyaMandi: "ଅୟୋଧ୍ୟା କୃଷି ମଣ୍ଡି", minWait: "ମିନିଟ୍ ଅପେକ୍ଷା" },
+  as: { gorakhpurMandi: "গৰখপুর মণ্ডি", lucknowMandi: "লখনউ দুবগ্গা মণ্ডি", kanpurMandi: "কানপুৰ নবাবগঞ্জ মণ্ডি", varanasiMandi: "বারাণসী মণ্ডী সমিতি", ayodhyaMandi: "অযোধ্যা কৃষি মণ্ডি", minWait: "মিনিট অপেক্ষা" },
+  ur: { gorakhpurMandi: "گورکھپور منڈی", lucknowMandi: "لکھنؤ دوبگّا منڈی", kanpurMandi: "کانپور نواب گنج منڈی", varanasiMandi: "وارانسی منڈی کمیٹی", ayodhyaMandi: "ایودھیا کِشی منڈی", minWait: "منٹ انتظار" },
+  mai: { gorakhpurMandi: "गोरखपुर मंडी", lucknowMandi: "लखनऊ दुबग्गा मंडी", kanpurMandi: "कानपुर नवाबगंज मंडी", varanasiMandi: "वाराणसी मंडी समिति", ayodhyaMandi: "अयोध्या कृषि मंडी", minWait: "मिनट प्रतीक्षा" },
+  raj: { gorakhpurMandi: "गोरखपुर मंडी", lucknowMandi: "लखनऊ दुबग्गा मंडी", kanpurMandi: "कानपुर नवाबगंज मंडी", varanasiMandi: "वाराणसी मंडी समिति", ayodhyaMandi: "अयोध्या कृषि मंडी", minWait: "मिनट प्रतीक्षा" },
+  hr: { gorakhpurMandi: "गोरखपुर मंडी", lucknowMandi: "लखनऊ दुबग्गा मंडी", kanpurMandi: "कानपुर नवाबगंज मंडी", varanasiMandi: "वाराणसी मंडी समिति", ayodhyaMandi: "अयोध्या कृषि मंडी", minWait: "मिनट प्रतीक्षा" },
+};
+
 for (const [code, overrides] of Object.entries(regionalOverrides)) {
-  defaultTranslations[code] = { ...defaultTranslations.en, ...overrides, ...landingOverrides[code] };
+  defaultTranslations[code] = {
+    ...defaultTranslations.en,
+    ...overrides,
+    ...landingOverrides[code],
+    ...(mandiNameTranslations[code] ?? {}),
+  };
 }
-defaultTranslations.raj = { ...defaultTranslations.hi };
-defaultTranslations.hr = { ...defaultTranslations.hi };
+defaultTranslations.raj = { ...defaultTranslations.hi, ...(mandiNameTranslations.raj ?? {}) };
+defaultTranslations.hr = { ...defaultTranslations.hi, ...(mandiNameTranslations.hr ?? {}) };
 
 export function getFallbackTranslation(text: string, language: string): string | null {
   if (!text || language === "en") return text || null;
