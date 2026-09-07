@@ -80,10 +80,14 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
       const res = await fetch(`${apiUrl}/api/voice/ask`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ query, lang: language }),
+        body: JSON.stringify({
+          query,
+          message: query,
+          lang: language,
+        }),
       });
       const data = await res.json();
-      const reply = data.answer || "No response received.";
+      const reply = data.reply || data.response || data.message || data.text || "No response received.";
       setResponse(reply);
 
       // Speak back the response
