@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useLanguage } from "@/lib/i18n";
 
 interface VoiceAssistantModalProps {
   isOpen: boolean;
@@ -41,19 +40,30 @@ type SpeechRecognitionWindow = Window & {
 };
 
 export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantModalProps) {
-  const { language } = useLanguage();
+  // SSR-safe session ID handling
+  const [sessionId] = useState(() => {
+    if (typeof window === "undefined") return "farmer_default";
+    const storedSessionId = localStorage.getItem("farmer_session_id");
+    if (storedSessionId) return storedSessionId;
+
+    const newSessionId = `farmer_${Math.random().toString(36).substring(2, 9)}`;
+    localStorage.setItem("farmer_session_id", newSessionId);
+    return newSessionId;
+  });
+
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [status, setStatus] = useState("Tap to Speak");
 
   const startListening = () => {
     const speechWindow = window as SpeechRecognitionWindow;
     const SpeechRecognition = speechWindow.SpeechRecognition || speechWindow.webkitSpeechRecognition;
 
     if (!SpeechRecognition) {
-      alert("Speech recognition is not supported in this browser.");
+      alert("Aapka browser voice recognition support nahi karta. Kripya Chrome ya Edge use karein.");
       return;
     }
 
@@ -62,7 +72,10 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
     recognition.continuous = false;
     recognition.interimResults = false;
 
-    recognition.onstart = () => setIsListening(true);
+    recognition.onstart = () => {
+      setIsListening(true);
+      setStatus("सुन रही हूँ... (Listening)");
+    };
 
     recognition.onresult = async (event: SpeechRecognitionResultEvent) => {
       const userSpeech = event.results[0][0].transcript;
@@ -71,23 +84,20 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
       await askAssistant(userSpeech);
     };
 
-    recognition.onerror = (event: SpeechRecognitionErrorEvent) => {
+    recognition.onerror = () => {
       setIsListening(false);
-      const errorMessage = event.error === "no-speech"
-        ? "माफ़ कीजिए, कोई आवाज़ नहीं सुनाई दी। कृपया दोबारा बोलिए।"
-        : event.error === "not-allowed"
-          ? "माइक्रोफ़ोन की अनुमति नहीं मिली। कृपया ब्राउज़र सेटिंग्स में माइक्रोफ़ोन चालू करें।"
-          : "नेटवर्क में समस्या आ रही है। कृपया दोबारा प्रयास करें।";
-      setResponse(errorMessage);
+      setStatus("आवाज़ समझ नहीं आई। दोबारा दबाएं।");
     };
+
     recognition.onend = () => setIsListening(false);
 
     recognition.start();
   };
 
   const speakResponse = (text: string) => {
-    if (!window.speechSynthesis) {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
       setIsSpeaking(false);
+      setStatus("Tap to Speak");
       return;
     }
 
@@ -96,12 +106,22 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
     utterance.lang = "hi-IN";
     utterance.rate = 1;
     utterance.pitch = 1;
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      setStatus("Tap to Speak");
+    };
+
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      setStatus("Tap to Speak");
+    };
 
     const voices = window.speechSynthesis.getVoices();
-    const preferredVoice = voices.find((voice) => voice.lang.toLowerCase() === "hi-in")
-      ?? voices.find((voice) => /swara|kalpana|google हिन्दी/i.test(voice.name));
+    const preferredVoice =
+      voices.find((voice) => voice.lang.toLowerCase() === "hi-in") ??
+      voices.find((voice) => /swara|kalpana|google हिन्दी/i.test(voice.name));
+
     if (preferredVoice) utterance.voice = preferredVoice;
 
     setIsSpeaking(true);
@@ -110,22 +130,28 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
 
   const askAssistant = async (query: string) => {
     setIsLoading(true);
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://kisan-q-backend.onrender.com";
+    setStatus("सोच रही हूँ... (Processing)");
+
+    // URL resolution: hamesha /ask endpoint par point karega
+    const rawBase = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+    const backendUrl = rawBase.endsWith("/ask")
+      ? rawBase
+      : `${rawBase.replace(/\/+$/, "")}/ask`;
 
     try {
-      const res = await fetch(`${apiUrl}/api/voice/ask`, {
+      const res = await fetch(backendUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          query,
-          message: query,
-          lang: language,
+          question: query,
+          query: query,
+          session_id: sessionId,
         }),
       });
+
       const data = (await res.json().catch(() => ({}))) as {
         reply?: string;
         response?: string;
-        message?: string;
         text?: string;
         error?: string;
       };
@@ -134,14 +160,18 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
         throw new Error(data.error || `Voice assistant service returned ${res.status}.`);
       }
 
-      const reply = data.reply || data.response || data.message || data.text;
+      const reply = data.reply || data.response || data.text || "उत्तर प्राप्त नहीं हुआ।";
       if (!reply) {
         throw new Error("Voice assistant returned an empty response.");
       }
+
       setResponse(reply);
+      setStatus("Tap to Speak");
       speakResponse(reply);
     } catch (error) {
-      setResponse(error instanceof Error ? error.message : "Voice assistant is unavailable. Please try again.");
+      console.error("Fetch error:", error);
+      setResponse("सर्वर से संपर्क नहीं हो पाया। कृपया पुनः प्रयास करें।");
+      setStatus("Tap to Speak");
     } finally {
       setIsLoading(false);
     }
@@ -150,27 +180,31 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
   if (!isOpen) return null;
 
   return (
-    <div style={{
-      position: "fixed",
-      inset: 0,
-      backgroundColor: "rgba(0, 0, 0, 0.5)",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      zIndex: 9999,
-      padding: "1rem"
-    }}>
-      <div style={{
-        background: "#ffffff",
-        borderRadius: "16px",
-        padding: "1.5rem",
-        maxWidth: "420px",
-        width: "100%",
-        boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+    <div
+      style={{
+        position: "fixed",
+        inset: 0,
+        backgroundColor: "rgba(0, 0, 0, 0.5)",
         display: "flex",
-        flexDirection: "column",
-        gap: "1rem"
-      }}>
+        alignItems: "center",
+        justifyContent: "center",
+        zIndex: 9999,
+        padding: "1rem",
+      }}
+    >
+      <div
+        style={{
+          background: "#ffffff",
+          borderRadius: "16px",
+          padding: "1.5rem",
+          maxWidth: "420px",
+          width: "100%",
+          boxShadow: "0 10px 25px rgba(0,0,0,0.2)",
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+        }}
+      >
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h3 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700 }}>Kisan Setu Sahayak</h3>
           <button
@@ -181,16 +215,26 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
           </button>
         </div>
 
-        <div style={{
-          minHeight: "100px",
-          background: "#f9fafb",
-          padding: "1rem",
-          borderRadius: "8px",
-          fontSize: "0.95rem"
-        }}>
-          {transcript && <p style={{ margin: "0 0 0.5rem 0", color: "#374151" }}><strong>You:</strong> {transcript}</p>}
-          {isLoading && <p style={{ margin: 0, color: "#6b7280" }}>सोच रही हूँ... (Processing)</p>}
-          {response && <p style={{ margin: 0, color: "#065f46" }}><strong>Sahayak:</strong> {response}</p>}
+        <div
+          style={{
+            minHeight: "100px",
+            background: "#f9fafb",
+            padding: "1rem",
+            borderRadius: "8px",
+            fontSize: "0.95rem",
+          }}
+        >
+          {transcript && (
+            <p style={{ margin: "0 0 0.5rem 0", color: "#374151" }}>
+              <strong>You:</strong> {transcript}
+            </p>
+          )}
+          {isLoading && <p style={{ margin: 0, color: "#6b7280" }}>{status}</p>}
+          {response && (
+            <p style={{ margin: 0, color: "#065f46" }}>
+              <strong>Sahayak:</strong> {response}
+            </p>
+          )}
           {!transcript && !isLoading && !response && !isSpeaking && (
             <p style={{ margin: 0, color: "#9ca3af" }}>बोलने के लिए माइक्रोफ़ोन दबाएँ।</p>
           )}
@@ -208,10 +252,10 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
             border: "none",
             borderRadius: "8px",
             fontWeight: 600,
-            cursor: isListening || isSpeaking ? "default" : "pointer"
+            cursor: isListening || isSpeaking ? "default" : "pointer",
           }}
         >
-          {isListening ? "सुन रही हूँ... (Listening)" : isSpeaking ? "बोल रही हूँ... (Speaking)" : "Tap to Speak"}
+          {isListening ? "सुन रही हूँ... (Listening)" : isSpeaking ? "बोल रही हूँ... (Speaking)" : status}
         </button>
       </div>
     </div>
