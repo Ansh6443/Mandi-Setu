@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { useLanguage } from "@/lib/i18n";
+import { getFallbackTranslation, useLanguage } from "@/lib/i18n";
 
 const originalTextMap = new WeakMap<Node, string>();
 const originalPlaceholderMap = new WeakMap<HTMLInputElement | HTMLTextAreaElement, string>();
@@ -114,16 +114,22 @@ export default function AutoTranslator() {
 
           targetNodes.forEach((n) => {
             const original = originalTextMap.get(n)?.trim();
-            if (original && dict[original]) {
+            if (!original) return;
+
+            const translated = dict[original] || getFallbackTranslation(original, language);
+            if (translated && translated !== original) {
               const raw = originalTextMap.get(n)!;
-              n.textContent = raw.replace(original, dict[original]);
+              n.textContent = raw.replace(original, translated);
             }
           });
 
           targetInputs.forEach((inp) => {
             const original = originalPlaceholderMap.get(inp)?.trim();
-            if (original && dict[original]) {
-              inp.placeholder = dict[original];
+            if (!original) return;
+
+            const translated = dict[original] || getFallbackTranslation(original, language);
+            if (translated && translated !== original) {
+              inp.placeholder = translated;
             }
           });
         })

@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/layout/Sidebar";
 import { House } from "@phosphor-icons/react";
+import { useLanguage } from "@/lib/i18n";
 import { STORAGE_KEYS } from "@/lib/storage-keys";
 
 export default function OfficerAppLayout({
@@ -13,6 +14,7 @@ export default function OfficerAppLayout({
   children: React.ReactNode;
 }>) {
   const router = useRouter();
+  const { t } = useLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
 
   // 🔒 सिक्योरिटी गार्ड (Auth Logic)
@@ -40,12 +42,12 @@ export default function OfficerAppLayout({
     <div className="officer-shell flex min-h-screen flex-col overflow-x-hidden bg-[var(--bg-body)]">
       <header className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-green-900 bg-[#00522c] px-[5%] py-2 text-xs font-semibold text-white">
           <div className="flex flex-wrap items-center gap-4">
-            <span className="rounded bg-[var(--saffron)] px-3 py-0.5 font-extrabold text-[var(--text-primary)]">DOCA समस्या समाधान #26032</span>
-            <span>भारत सरकार | उपभोक्ता मामले, खाद्य और सार्वजनिक वितरण मंत्रालय</span>
+            <span className="rounded bg-[var(--saffron)] px-3 py-0.5 font-extrabold text-[var(--text-primary)]">DOCA {t("govIssue")} #26032</span>
+            <span>{t("govMinistry")}</span>
           </div>
           <div className="flex flex-wrap items-center gap-4">
             <Link href="/farmer" className="flex h-14 items-center gap-1.5 rounded-xl px-3 font-bold hover:text-green-200">
-              <House size={20} weight="regular" /> किसान ऐप देखें
+              <House size={20} weight="regular" /> {t("viewFarmerApp")}
             </Link>
           </div>
       </header>

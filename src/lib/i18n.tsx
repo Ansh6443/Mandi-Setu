@@ -200,6 +200,22 @@ for (const [code, overrides] of Object.entries(regionalOverrides)) {
 defaultTranslations.raj = { ...defaultTranslations.hi };
 defaultTranslations.hr = { ...defaultTranslations.hi };
 
+export function getFallbackTranslation(text: string, language: string): string | null {
+  if (!text || language === "en") return text || null;
+
+  const targetMap = defaultTranslations[language];
+  if (!targetMap) return null;
+
+  const englishValueToKey = Object.entries(defaultTranslations.en).find(([, value]) => value === text);
+  if (englishValueToKey) {
+    const translated = targetMap[englishValueToKey[0]];
+    return translated || null;
+  }
+
+  const exactMatch = Object.entries(targetMap).find(([, value]) => value === text);
+  return exactMatch ? exactMatch[1] : null;
+}
+
 type LanguageContextValue = {
   language: string;
   setLanguage: (lang: string) => void;

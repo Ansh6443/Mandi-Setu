@@ -12,12 +12,6 @@ import {
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/lib/i18n";
 
-const queueStats = [
-  { name: "लखनऊ दुबग्गा मंडी", token: "T - 114", waitMinutes: 18 },
-  { name: "गोरखपुर मंडी", token: "T - 067", waitMinutes: 9 },
-  { name: "कानपुर नवाबगंज मंडी", token: "T - 032", waitMinutes: 41 },
-];
-
 const services = [
   {
     icon: CalendarBlank,
@@ -47,6 +41,12 @@ const trustStats = [
 
 export default function HomePage() {
   const { t } = useLanguage();
+
+  const queueStats = [
+    { name: t("lucknowMandi"), token: "T - 114", waitMinutes: 18 },
+    { name: t("gorakhpurMandi"), token: "T - 067", waitMinutes: 9 },
+    { name: t("kanpurMandi"), token: "T - 032", waitMinutes: 41 },
+  ];
 
   return (
     <div className="app-shell">
@@ -170,7 +170,7 @@ export default function HomePage() {
       </main>
 
       <footer className="site-footer">
-        <div className="footer-brand">मंडी सेतु — SIH 26032</div>
+        <div className="footer-brand">{t("brand")} — SIH 26032</div>
         <div>{t("footer")}</div>
       </footer>
     </div>
