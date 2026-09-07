@@ -133,7 +133,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
     setStatus("सोच रही हूँ... (Processing)");
 
     // URL resolution: hamesha /ask endpoint par point karega
-    const rawBase = process.env.NEXT_PUBLIC_BACKEND_URL || "http://127.0.0.1:8000";
+    const rawBase = process.env.NEXT_PUBLIC_BACKEND_URL || "https://kisan-q-backend.onrender.com";
     const backendUrl = rawBase.endsWith("/ask")
       ? rawBase
       : `${rawBase.replace(/\/+$/, "")}/ask`;
