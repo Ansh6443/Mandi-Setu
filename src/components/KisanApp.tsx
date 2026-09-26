@@ -2,13 +2,15 @@
 
 import { Bell, CalendarBlank, Check, CaretRight, CreditCard, House, Leaf, LockKey, MapPin, Phone, Plus, ShieldCheck, SignOut, SpeakerHigh, CheckCircle, User } from "@phosphor-icons/react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import CropQualityPanel from "@/components/CropQualityPanel";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/lib/i18n";
-import { DEMO_FARMER_ID, receiptStorageKey } from "@/lib/storage-keys";
+import { DEFAULT_MANDI_ID, DEMO_FARMER_ID, receiptStorageKey, STORAGE_KEYS } from "@/lib/storage-keys";
 
 type AuthStep = "mobile" | "mobileOtp" | "identity" | "identityOtp";
-type ViewName = "home" | "book" | "status" | "payment" | "profile" | "receipt" | "identity" | "identityOtp";
+type ViewName = "home" | "book" | "status" | "quality" | "payment" | "profile" | "receipt" | "identity" | "identityOtp";
 type CropKey = "onion" | "wheat" | "potato" | "tomato" | "soybean";
 
 const cropCatalog: Record<CropKey, string> = {
@@ -27,13 +29,17 @@ const cropCatalogEnglish: Record<CropKey, string> = {
   soybean: "Soybean",
 };
 
-const cropIcons: Record<CropKey, string> = {
+const cropEmojis: Record<CropKey, string> = {
   onion: "🧅",
   wheat: "🌾",
   potato: "🥔",
   tomato: "🍅",
   soybean: "🫘",
 };
+
+function CropIcon({ crop }: { crop: CropKey }) {
+  return <span className="rate-crop-icon" aria-hidden="true">{cropEmojis[crop]}</span>;
+}
 
 const dateOptions = [
   { label: "आज", english: "Today", day: "27", month: "अगस्त", englishMonth: "August" },
@@ -60,17 +66,17 @@ const englishTimeOptions = [
 ];
 
 const marketRates = [
-  { key: "onion" as CropKey, crop: "प्याज", price: "₹1,850", change: "+2%", up: true },
-  { key: "wheat" as CropKey, crop: "गेहूँ", price: "₹2,275", change: "-1%", up: false },
-  { key: "potato" as CropKey, crop: "आलू", price: "₹1,200", change: "+1%", up: true },
-  { key: "tomato" as CropKey, crop: "टमाटर", price: "₹900", change: "-3%", up: false },
-  { key: "soybean" as CropKey, crop: "सोयाबीन", price: "₹4,700", change: "+1%", up: true },
+  { key: "onion" as CropKey, crop: "प्याज", price: 1850, change: "+2%", up: true },
+  { key: "wheat" as CropKey, crop: "गेहूँ", price: 2275, change: "-1%", up: false },
+  { key: "potato" as CropKey, crop: "आलू", price: 1200, change: "+1%", up: true },
+  { key: "tomato" as CropKey, crop: "टमाटर", price: 900, change: "-3%", up: false },
+  { key: "soybean" as CropKey, crop: "सोयाबीन", price: 4700, change: "+1%", up: true },
 ];
 
 const statusSteps = ["registered", "checkIn", "qualityWeight", "auctionApproved", "dbtPayment"] as const;
-
 export default function KisanApp() {
   const { language, t } = useLanguage();
+  const router = useRouter();
   const [authStep, setAuthStep] = useState<AuthStep>("mobile");
   const [mobile, setMobile] = useState("");
   const [mobileConsent, setMobileConsent] = useState(false);
@@ -85,6 +91,8 @@ export default function KisanApp() {
   const [currentView, setCurrentView] = useState<ViewName>("home");
   const [bookingDate, setBookingDate] = useState("27 अगस्त");
   const [bookingTime, setBookingTime] = useState("सुबह 8:00 - 10:00");
+  const [mandiOpen, setMandiOpen] = useState(false);
+  const [farmerMarketRates, setFarmerMarketRates] = useState(marketRates);
   const [cropQuantities, setCropQuantities] = useState<Record<string, number>>({ onion: 50 });
   const [customCrop, setCustomCrop] = useState("");
   const [customCropQty, setCustomCropQty] = useState("");
@@ -93,6 +101,66 @@ export default function KisanApp() {
   const [isSpeaking, setIsSpeaking] = useState(false);
   // यह identifier officer के farmer.bookingId से बिल्कुल समान होना MUST है, तभी receipt मिल पाएगी।
   const receiptKey = receiptStorageKey(farmerId);
+
+  useEffect(() => {
+    let active = true;
+    const refreshMandiStatus = async () => {
+      try {
+        const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/daily-setup`, { cache: "no-store" });
+        if (!response.ok) return;
+        const record = await response.json() as { mandiOpen?: boolean; setupCompletedAt?: string | null };
+        if (active) setMandiOpen(Boolean(record.setupCompletedAt && record.mandiOpen));
+      } catch {
+        if (active) setMandiOpen(false);
+      }
+    };
+
+    void refreshMandiStatus();
+    const intervalId = window.setInterval(() => void refreshMandiStatus(), 15000);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  const navigateToView = (view: ViewName) => {
+    setCurrentView(view);
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  };
+
+  useEffect(() => {
+    const syncMarketRates = (storedValue: string | null) => {
+      if (!storedValue) {
+        setFarmerMarketRates(marketRates);
+        return;
+      }
+
+      try {
+        const savedRates = JSON.parse(storedValue) as Array<{ crop?: string; value?: string }>;
+        if (!Array.isArray(savedRates)) return;
+        const prices = new Map<string, number>();
+        for (const rate of savedRates) {
+          const price = Number(rate?.value);
+          if (typeof rate?.crop === "string" && Number.isFinite(price) && price >= 0) {
+            prices.set(rate.crop, price);
+          }
+        }
+        setFarmerMarketRates(marketRates.map((rate) => ({
+          ...rate,
+          price: prices.get(cropCatalog[rate.key]) ?? rate.price,
+        })));
+      } catch {
+        // Keep the currently displayed rates when stored data is invalid.
+      }
+    };
+
+    syncMarketRates(window.localStorage.getItem(STORAGE_KEYS.mspRates));
+    const handleStorage = (event: StorageEvent) => {
+      if (event.key === STORAGE_KEYS.mspRates) syncMarketRates(event.newValue);
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
 
   useEffect(() => {
     const readReceiptPhoto = (storedValue: string | null) => {
@@ -135,7 +203,7 @@ export default function KisanApp() {
     } catch {
       setReceiptPhoto(null);
     }
-    setCurrentView("receipt");
+    navigateToView("receipt");
   };
 
   const speakReceipt = () => {
@@ -177,19 +245,19 @@ export default function KisanApp() {
   const verifyMobileOtp = () => {
     if (!validOtp) return;
     setIsLoggedIn(true);
-    setCurrentView("home");
+    navigateToView("home");
   };
 
   const sendIdentityOtp = () => {
     if (selectedMethod === "aadhaar" && !(validAadhaar && aadhaarConsent)) return;
     if (selectedMethod === "farmer" && !(validFarmerId && farmerConsent)) return;
-    setCurrentView("identityOtp");
+    navigateToView("identityOtp");
   };
 
   const verifyIdentityOtp = () => {
     if (!validIdentityOtp) return;
     setIsLoggedIn(true);
-    setCurrentView("status");
+    navigateToView("status");
   };
 
   const toggleCrop = (key: CropKey) => {
@@ -207,13 +275,15 @@ export default function KisanApp() {
   const doBooking = () => {
     if (bookingSummary.length === 0) return;
     setBookingDone(true);
-    setCurrentView("identity");
+    navigateToView("identity");
   };
 
   const viewTitle = currentView === "book"
     ? t("bookSlotTitle")
     : currentView === "status"
       ? t("liveTracking")
+        : currentView === "quality"
+          ? t("cropQualityTitle")
       : currentView === "payment"
         ? t("payments")
         : currentView === "profile"
@@ -230,6 +300,7 @@ export default function KisanApp() {
     const previousView: Partial<Record<ViewName, ViewName>> = {
       book: "home",
       status: "home",
+      quality: "home",
       payment: "home",
       profile: "home",
       receipt: "payment",
@@ -237,7 +308,12 @@ export default function KisanApp() {
       identityOtp: "identity",
     };
     const destination = previousView[currentView];
-    if (destination) setCurrentView(destination);
+    if (destination) navigateToView(destination);
+  };
+
+  const handleFarmerLogout = () => {
+    setIsLoggedIn(false);
+    router.replace("/");
   };
 
   if (!isLoggedIn) {
@@ -246,7 +322,7 @@ export default function KisanApp() {
         <div className="auth-card">
           <div className="auth-brand">
             <div className="brand-mark small">
-              <Leaf size={18} />
+              <Image src="/mandi-setu-logo.svg" alt="" width={36} height={36} className="brand-mark-image" />
             </div>
             <div>
               <div className="brand-name">{t("brand")}</div>
@@ -434,7 +510,7 @@ export default function KisanApp() {
             </button>
           )}
           <div className="brand-mark small">
-            <Leaf size={18} />
+            <Image src="/mandi-setu-logo.svg" alt="" width={36} height={36} className="brand-mark-image" />
           </div>
           <div>
             <div className="brand-name">{t("farmerName")}</div>
@@ -442,7 +518,7 @@ export default function KisanApp() {
           </div>
         </div>
 
-        {currentView !== "home" && <h1 className="screen-title">{viewTitle}</h1>}
+        {currentView !== "home" && currentView !== "quality" && <h1 className="screen-title">{viewTitle}</h1>}
 
         <button type="button" className="notification-btn" aria-label={t("notifications")}>
           <Bell size={18} />
@@ -496,9 +572,9 @@ export default function KisanApp() {
                 <h1>{t("greeting")}</h1>
                 <p>{t("dashboardIntro")}</p>
               </div>
-              <span className="live-pill">
-                <span className="status-dot" />
-                {t("live")}
+              <span className="live-pill" style={mandiOpen ? undefined : { background: "rgba(100, 116, 139, 0.1)", color: "var(--text-secondary)", borderColor: "rgba(100, 116, 139, 0.3)" }}>
+                <span className="status-dot" style={mandiOpen ? undefined : { background: "#94a3b8" }} />
+                {mandiOpen ? t("mandiOpen") : t("mandiClosed")}
               </span>
             </div>
 
@@ -508,11 +584,11 @@ export default function KisanApp() {
             </div>
 
             <div className="rate-grid">
-              {marketRates.map((rate) => (
+              {farmerMarketRates.map((rate) => (
                 <div key={rate.crop} className="rate-card">
-                  <span className="rate-crop-icon" aria-hidden="true">{cropIcons[rate.key]}</span>
+                  <CropIcon crop={rate.key} />
                   <div className="rate-crop-name">{t(rate.key)}</div>
-                  <div className="rate-price">{rate.price}</div>
+                  <div className="rate-price">₹{rate.price.toLocaleString("en-IN")}</div>
                   <div className={`rate-change ${rate.up ? "up" : "down"}`}>{rate.up ? "▲" : "▼"} {rate.change}</div>
                 </div>
               ))}
@@ -526,7 +602,7 @@ export default function KisanApp() {
                 </div>
                 <h3>{t("noBooking")}</h3>
                 <p>{t("bookPrompt")}</p>
-                <button className="primary-btn" onClick={() => setCurrentView("book")}>{t("bookNewSlot")}</button>
+                <button className="primary-btn" onClick={() => navigateToView("book")}>{t("bookNewSlot")}</button>
               </div>
             ) : (
               <div className="active-card">
@@ -558,7 +634,7 @@ export default function KisanApp() {
             </div>
 
             <div className="services-grid">
-              <button type="button" className="service-tile" onClick={() => setCurrentView("book")}>
+              <button type="button" className="service-tile" onClick={() => navigateToView("book")}>
                 <span className="tile-icon civic"><CalendarBlank size={18} /></span>
                 <span>
                   <strong>{t("bookSlot")}</strong>
@@ -567,7 +643,7 @@ export default function KisanApp() {
                 <CaretRight size={18} />
               </button>
 
-              <button type="button" className="service-tile" onClick={() => setCurrentView("status")}>
+              <button type="button" className="service-tile" onClick={() => navigateToView("status")}>
                 <span className="tile-icon ok"><ShieldCheck size={18} /></span>
                 <span>
                   <strong>{t("liveStatus")}</strong>
@@ -576,7 +652,7 @@ export default function KisanApp() {
                 <CaretRight size={18} />
               </button>
 
-              <button type="button" className="service-tile" onClick={() => setCurrentView("payment")}>
+              <button type="button" className="service-tile" onClick={() => navigateToView("payment")}>
                 <span className="tile-icon saffron"><CreditCard size={18} /></span>
                 <span>
                   <strong>{t("trackPayment")}</strong>
@@ -621,7 +697,7 @@ export default function KisanApp() {
                     className={`crop-btn ${isSelected ? "active" : ""}`}
                     onClick={() => toggleCrop(key)}
                   >
-                    <span className="crop-emoji" aria-hidden="true">{cropIcons[key]}</span>
+                    <CropIcon crop={key} />
                     {language === "en" ? cropCatalogEnglish[key] : cropCatalog[key]}
                   </button>
                 );
@@ -738,6 +814,8 @@ export default function KisanApp() {
           </div>
         )}
 
+        {currentView === "quality" && <CropQualityPanel />}
+
         {currentView === "payment" && (
           <div className="panel-card">
             <div className="payment-banner">{t("paymentNotice")}</div>
@@ -776,7 +854,7 @@ export default function KisanApp() {
                 <h2>टोकन T-114</h2>
                 <span className="success-tag"><CheckCircle size={18} aria-hidden="true" /> {t("paymentComplete")}</span>
               </div>
-              <button type="button" className="icon-btn" aria-label={t("closeReceipt")} onClick={() => setCurrentView("payment")}>×</button>
+              <button type="button" className="icon-btn" aria-label={t("closeReceipt")} onClick={() => navigateToView("payment")}>×</button>
             </div>
             <div className="payment-header">
               <div><small>{t("netPayment")}</small><h2>₹90,090</h2></div>
@@ -823,7 +901,7 @@ export default function KisanApp() {
   type="button" 
   className="danger-btn" 
   style={{ marginTop: '24px' }} 
-  onClick={() => setIsLoggedIn(false)}
+  onClick={handleFarmerLogout}
 >
   <SignOut size={18} />
   {t("closeAccount")}
@@ -833,23 +911,27 @@ export default function KisanApp() {
       </main>
 
       <nav className="bottom-nav" aria-label="Bottom navigation">
-        <button type="button" className={currentView === "home" ? "nav-item active" : "nav-item"} onClick={() => setCurrentView("home")}>
+        <button type="button" className={currentView === "home" ? "nav-item active" : "nav-item"} onClick={() => navigateToView("home")}>
           <House size={18} />
           <span>{t("home")}</span>
         </button>
-        <button type="button" className={currentView === "book" ? "nav-item active" : "nav-item"} onClick={() => setCurrentView("book")}>
+        <button type="button" className={currentView === "book" ? "nav-item active" : "nav-item"} onClick={() => navigateToView("book")}>
           <CalendarBlank size={18} />
           <span>{t("navBooking")}</span>
         </button>
-        <button type="button" className={currentView === "status" ? "nav-item active" : "nav-item"} onClick={() => setCurrentView("status")}>
+        <button type="button" className={currentView === "status" ? "nav-item active" : "nav-item"} onClick={() => navigateToView("status")}>
           <Check size={18} />
           <span>{t("status")}</span>
         </button>
-        <button type="button" className={currentView === "payment" ? "nav-item active" : "nav-item"} onClick={() => setCurrentView("payment")}>
+        <button type="button" className={currentView === "quality" ? "nav-item active" : "nav-item"} onClick={() => navigateToView("quality")}>
+          <Leaf size={18} />
+          <span>{t("cropQualityTab")}</span>
+        </button>
+        <button type="button" className={currentView === "payment" ? "nav-item active" : "nav-item"} onClick={() => navigateToView("payment")}>
           <CreditCard size={18} />
           <span>{t("payments")}</span>
         </button>
-        <button type="button" className={currentView === "profile" ? "nav-item active" : "nav-item"} onClick={() => setCurrentView("profile")}>
+        <button type="button" className={currentView === "profile" ? "nav-item active" : "nav-item"} onClick={() => navigateToView("profile")}>
           <User size={18} />
           <span>{t("profile")}</span>
         </button>

@@ -1,4 +1,5 @@
 export const DEMO_FARMER_ID = "MH-26032-4812";
+export const DEFAULT_MANDI_ID = "azadpur";
 
 export const STORAGE_KEYS = {
   officerAuthenticated: "officer-authenticated",

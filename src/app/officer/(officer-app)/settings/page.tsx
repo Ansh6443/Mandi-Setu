@@ -13,6 +13,13 @@ const initialRates = [
   { crop: "टमाटर", value: "900" },
   { crop: "सोयाबीन", value: "4700" },
 ];
+const cropEmojis: Record<string, string> = {
+  प्याज: "🧅",
+  गेहूँ: "🌾",
+  आलू: "🥔",
+  टमाटर: "🍅",
+  सोयाबीन: "🫘",
+};
 
 export default function SettingsPage() {
   const [isOpen, setIsOpen] = useState(true);
@@ -59,7 +66,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <main className="min-h-full bg-[#f4f9f4] px-6 py-6 md:px-8">
+    <main className="officer-page-shell">
       <header className="mb-6">
         <h1 className="text-3xl font-black text-gray-900">{t("mandiSettings")}</h1>
         <p className="mt-1 text-sm font-bold text-gray-600">{t("settingsDescription")}</p>
@@ -104,17 +111,18 @@ export default function SettingsPage() {
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <h2 className="text-base font-black text-gray-900">{t("cropRates")}</h2>
           <p className="mt-1 text-sm font-semibold text-gray-600">{t("rateDescription")}</p>
-          <div className="mt-4">
+          <div className="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
             {rates.map((rate, index) => (
-              <div key={rate.crop} className="flex min-h-20 items-center justify-between gap-6 border-b border-neutral-200 py-4 last:border-0">
-                <span className="font-black text-gray-900">{rate.crop}</span>
+              <div key={rate.crop} className="rate-card rate-card--editable">
+                <span className="rate-crop-icon" aria-hidden="true">{cropEmojis[rate.crop] ?? "🌱"}</span>
+                <div className="rate-crop-name">{rate.crop}</div>
                 <input
                   aria-label={`${rate.crop} दर`}
                   type="number"
                   min="0"
                   value={rate.value}
                   onChange={(event) => updateRate(index, event.target.value)}
-                  className="h-14 w-full max-w-[180px] rounded-lg border border-gray-200 px-4 py-2 text-right font-semibold text-gray-900 outline-none focus:border-green-700"
+                  className="rate-edit-input"
                 />
               </div>
             ))}

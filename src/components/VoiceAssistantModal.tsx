@@ -134,6 +134,7 @@ export default function VoiceAssistantModal({ isOpen, onClose }: VoiceAssistantM
 
     // Render URL locked (no .env override)
     const backendUrl = "https://kisan-q-backend.onrender.com/ask";
+
     try {
       const res = await fetch(backendUrl, {
         method: "POST",

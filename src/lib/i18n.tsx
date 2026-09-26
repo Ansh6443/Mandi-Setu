@@ -6,7 +6,29 @@ import { STORAGE_KEYS } from "@/lib/storage-keys";
 const defaultTranslations: Record<string, Record<string, string>> = {
   hi: {
     language: "भाषा", hindi: "हिन्दी", english: "English", home: "होम", navBooking: "बुकिंग",
-    status: "स्टेटस", payments: "भुगतान", profile: "प्रोफाइल", backHome: "होम",
+    status: "स्टेटस", cropQualityTab: "गुणवत्ता", cropQualityTitle: "फसल गुणवत्ता जाँच", payments: "भुगतान", profile: "प्रोफाइल", backHome: "होम",
+    qualityGuide: "मंडी से पहले स्वयं-जाँच", qualityInspectionTitle: "अपनी फसल की गुणवत्ता जाँचें",
+    qualityInspectionIntro: "फसल चुनें, फोटो जोड़ें और हर बिंदु को खुद देखकर टिक करें।", qualityCrop: "फसल चुनें",
+    qualityStandardLabel: "गुणवत्ता संकेत", qualityReferencePrice: "संदर्भ भाव / क्विंटल",
+    qualityOnionStandard: "कम नमी, सूखा और कसा छिलका", qualityWheatStandard: "साफ़ दाना, कम नमी",
+    qualityPotatoStandard: "सख़्त, बिना हरापन या अंकुर", qualityTomatoStandard: "पका, सख़्त, बिना दरार",
+    qualitySoybeanStandard: "साफ़ दाना, कम नमी",
+    qualityPhotoTitle: "फसल की फोटो जोड़ें",
+    qualityPhotoDescription: "फोटो सिर्फ़ इसी डिवाइस पर preview होगी। जाँच के बिंदु किसान खुद सत्यापित करें।",
+    qualityTakePhoto: "कैमरा खोलें", qualityChoosePhoto: "गैलरी से चुनें", qualityDemoTest: "डेमो टेस्ट",
+    qualityPhotoPreview: "चुनी गई फसल की फोटो का preview", qualityPhotoPrivacy: "डेमो टेस्ट नमूना परिणाम दिखाता है; फोटो का AI विश्लेषण या upload नहीं होता।",
+    qualityPhotoTypeError: "कृपया image file चुनें।", qualityPhotoSizeError: "फोटो 10 MB से छोटी होनी चाहिए।",
+    qualityAppearance: "रंग और बाहरी रूप", qualityAppearanceHint: "रंग ठीक हो, छिलका कसा और चमकदार हो।",
+    qualityDamage: "सड़न और नुकसान", qualityDamageHint: "नरम, काले धब्बे या कीट लगे हिस्से अलग करें।",
+    qualityCleanliness: "सफाई", qualityCleanlinessHint: "सूखी जड़ें छोटी करें, गीली मिट्टी हटाएँ।",
+    qualityMoisture: "नमी और सुखाव", qualityMoistureHint: "छिलका सूखा हो; अंदर गलापन न हो।",
+    qualityPass: "पास", qualityCheckNow: "जाँचें",
+    qualityReady: "जाँच पूरी - फसल मंडी के लिए तैयार है!", qualityReadyHint: "आपने सभी बिंदु स्वयं सत्यापित किए हैं।",
+    qualityDemoComplete: "डेमो पूरा - नमूना परिणाम देखें",
+    qualityInProgress: "जाँच जारी है", qualityDemoNotice: "यह नमूना डेमो परिणाम है, फोटो से जाँच नहीं हुई।",
+    qualityProgressHint: "जाँचे गए बिंदु", qualityDisclaimer: "यह किसान की स्वयं-जाँच है, मंडी की आधिकारिक गुणवत्ता रिपोर्ट नहीं। अंतिम ग्रेड मंडी में तय होगा।",
+    qualitySubmit: "जमा करें", qualitySubmissionSaved: "फसल की गुणवत्ता जाँच जमा हो गई।",
+    qualityDemoSubmissionSaved: "डेमो गुणवत्ता जाँच जमा हो गई।",
     farmerAuthSubtitle: "मंडी बुकिंग और भुगतान", mobileVerification: "मोबाइल सत्यापन",
     startWithMobile: "मोबाइल नंबर से शुरू करें", mobileDescription: "आपका पंजीकृत मोबाइल नंबर सुरक्षित रूप से सत्यापन के लिए उपयोग किया जाएगा।",
     mobileNumber: "मोबाइल नंबर", mobilePlaceholder: "10 अंकों का मोबाइल नंबर",
@@ -92,7 +114,28 @@ const defaultTranslations: Record<string, Record<string, string>> = {
   },
   en: {
     language: "Language", hindi: "हिन्दी", english: "English", home: "Home", navBooking: "Booking",
-    status: "Status", payments: "Payments", profile: "Profile", backHome: "Home",
+    status: "Status", cropQualityTab: "Quality", cropQualityTitle: "Crop quality check", payments: "Payments", profile: "Profile", backHome: "Home",
+    qualityGuide: "Farmer self-check", qualityInspectionTitle: "Check your crop quality",
+    qualityInspectionIntro: "Choose a crop, add a photo, and tick each item after checking it yourself.", qualityCrop: "Choose crop",
+    qualityStandardLabel: "Quality guide", qualityReferencePrice: "Reference price / quintal",
+    qualityOnionStandard: "Low moisture, dry and firm skin", qualityWheatStandard: "Clean grains, low moisture",
+    qualityPotatoStandard: "Firm, with no greening or sprouts", qualityTomatoStandard: "Ripe, firm, without cracks",
+    qualitySoybeanStandard: "Clean grains, low moisture",
+    qualityPhotoTitle: "Add a crop photo", qualityPhotoDescription: "The photo is previewed on this device only. Farmers verify each check themselves.",
+    qualityTakePhoto: "Open camera", qualityChoosePhoto: "Choose from gallery", qualityDemoTest: "Demo test",
+    qualityPhotoPreview: "Preview of the selected crop photo", qualityPhotoPrivacy: "Demo test shows sample results; the photo is not analyzed by AI or uploaded.",
+    qualityPhotoTypeError: "Please choose an image file.", qualityPhotoSizeError: "The photo must be smaller than 10 MB.",
+    qualityAppearance: "Appearance and color", qualityAppearanceHint: "Color looks right; skin is firm and bright.",
+    qualityDamage: "Rot and damage", qualityDamageHint: "Separate soft, dark-spotted, or pest-damaged produce.",
+    qualityCleanliness: "Cleanliness", qualityCleanlinessHint: "Trim dry roots and remove wet soil.",
+    qualityMoisture: "Moisture and drying", qualityMoistureHint: "The skin is dry, with no softness inside.",
+    qualityPass: "Pass", qualityCheckNow: "Check",
+    qualityReady: "Checks complete - your crop is ready for the mandi!", qualityReadyHint: "You verified all items yourself.",
+    qualityDemoComplete: "Demo complete - review the sample results",
+    qualityInProgress: "Checks in progress", qualityDemoNotice: "Sample demo result; the photo was not analyzed.",
+    qualityProgressHint: "items checked", qualityDisclaimer: "This is a farmer self-check, not an official mandi quality report. Final grading happens at the mandi.",
+    qualitySubmit: "Submit", qualitySubmissionSaved: "Crop quality check submitted.",
+    qualityDemoSubmissionSaved: "Demo crop quality check submitted.",
     farmerAuthSubtitle: "Mandi booking and payments", mobileVerification: "Mobile verification",
     startWithMobile: "Start with your mobile number", mobileDescription: "Your registered mobile number will be securely used for verification.",
     mobileNumber: "Mobile number", mobilePlaceholder: "10-digit mobile number",
@@ -151,6 +194,9 @@ const defaultTranslations: Record<string, Record<string, string>> = {
     officerConsole: "Officer Console", officerConsoleVersion: "Officer Console v1.0", officerName: "Sunil Patil", officerMandi: "Azadpur Mandi", mainMenu: "Main menu", viewFarmerApp: "View farmer app", dashboard: "Dashboard", liveQueue: "Live queue", liveWeighment: "Live weighing", weighmentPayment: "Weighment and payment", settings: "Mandi settings", reports: "Reports", officerDashboard: "Today's dashboard", todayMandi: "Thursday, 27 August 2026 · Azadpur Mandi", todayCapacity: "Today's capacity", availableSlots: "Total available slots", booked: "Booked", totalTokens: "Total tokens today", arrived: "Arrived (check-in)", atGate: "Present at gate", complete: "Complete", paid: "Payment completed", averageWait: "Average wait", basedOnFarmers: "Based on the last 50 farmers", nextStep: "Next step", callFarmer: "Call the waiting farmer to the counter", voiceAnnouncement: "Real voice announcement in Hindi (Web Speech API)", callNextToken: "Call next token", noFarmerWaiting: "No farmer is waiting right now", tokenCalled: "Token #{token} — {name} was called", weighingStarted: "Weighing started for token #{token}", slotAssigned: "Slot assigned for token #{token}", queueOverview: "Today's queue — at a glance", fullList: "Full list", cropAndQuantity: "Crop and quantity", slotTime: "Slot time", action: "Action", operationalSnapshot: "Operational snapshot", gatePassIssued: "Gate passes issued", activeFarmers: "Active farmers", todayPayment: "Today's payment", pendingReview: "Pending review", manualIntervention: "Manual intervention", weightVerification: "Weight verification", qualityInspection: "Quality inspection", high: "High", medium: "Medium", searchQueue: "Search token, name or Farmer ID...", weeklyReport: "Weekly report", servedFarmers: "Farmers served in the last 7 days", totalFarmersWeek: "Total farmers this week", totalPurchaseWeek: "Total purchase value this week", dailyFarmers: "Daily farmer count", waitingAverage: "Wait time based on the average of the last 50 farmers", mandiSettings: "Mandi settings", settingsDescription: "Control capacity and today's crop rates here", mandiStatus: "Mandi status", mandiOpen: "Open — farmers can book now", mandiClosed: "Closed — farmers cannot book", toggleMandiStatus: "Toggle mandi status", totalCapacity: "Total capacity today (slots)", cropRates: "Today's crop rates (₹ / quintal)", rateDescription: "These rates appear automatically on the weighing screen — changes affect the next calculation.", rateLabel: "Rate", changeRate: "Want to change the rate?", openSettings: "Open mandi settings", crop: "Crop", actualWeight: "Actual weight (in quintals)", enterActualWeight: "Enter actual weight", estimatedAmount: "Estimated amount (₹)", ratePerQuintal: "Rate / quintal (₹) — from mandi settings", generateJForm: "Generate J-Form and send DBT", submitted: "Recorded", livePhoto: "Take live photo", retakePhoto: "Retake", takeScalePhoto: "Take scale photo", photoAlt: "Live scale photo", reasonPhotoUnavailable: "Reason (photo unavailable)", photoReasonPlaceholder: "e.g. camera not working", recordedWithoutPhoto: "Recorded without photo", submit: "Submit", takePhotoAndWeight: "Take photo and enter weight", correctInfo: "Information is correct, click the button", digitalPreview: "Digital J-Form — preview", grossAmount: "Gross amount", mandiTax: "Mandi tax (1%)", netPayment: "Net payment", bankName: "State Bank of India (SBI) ****4521"
   }
 };
+
+defaultTranslations.hi.dailySetup = "दैनिक सेटअप";
+defaultTranslations.en.dailySetup = "Daily setup";
 
 const regionalOverrides: Record<string, Record<string, string>> = {
   pa: {

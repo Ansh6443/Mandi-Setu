@@ -10,7 +10,7 @@ const payments = [
 
 export default function PaymentListPage() {
   return (
-    <main className="min-h-full bg-[#f4f9f4] p-6">
+    <main className="officer-page-shell">
       <p className="mb-6 text-sm font-bold text-gray-600">वास्तविक तौल दर्ज करें — J-Form और DBT स्वतः तैयार होगा</p>
       <div className="mb-8 flex min-h-36 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-300 bg-white p-6 text-center">
         <h1 className="text-lg font-black text-gray-900">तौल शुरू करने के लिए प्रतीक्षारत किसान चुनें</h1>

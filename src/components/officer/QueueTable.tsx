@@ -1,7 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { DEFAULT_MANDI_ID } from "@/lib/storage-keys";
+import type { TokenBoardState } from "@/lib/server/token-store";
 
 const queueEntries = [
   { token: "#41", id: "MH-26032-1187", farmer: "विट्ठल शिंदे", crop: "गेहूँ", quantity: "अनुमानित 40 क्विंटल", slot: "08:30 AM", status: "भुगतान पूर्ण" },
@@ -22,13 +24,45 @@ const statusClasses: Record<string, string> = {
 };
 
 export default function QueueTable({ query }: { query: string }) {
+  const [dailyRecord, setDailyRecord] = useState<TokenBoardState | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const readDailyRecord = async () => {
+      try {
+        const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/daily-setup`, { cache: "no-store" });
+        if (!response.ok) return;
+        const record = await response.json() as TokenBoardState;
+        if (active) setDailyRecord(record);
+      } catch {
+        if (active) setDailyRecord(null);
+      }
+    };
+
+    void readDailyRecord();
+    const intervalId = window.setInterval(() => void readDailyRecord(), 15000);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  const dailyEntries = queueEntries.map((entry, index) => {
+    const tokenNumber = dailyRecord?.dailyTokenNumbers[index];
+    return {
+      ...entry,
+      token: tokenNumber === undefined ? "—" : `#${String(tokenNumber).padStart(2, "0")}`,
+      tokenNumber,
+    };
+  });
+
   const filteredEntries = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return queueEntries;
-    return queueEntries.filter((entry) =>
+    if (!normalizedQuery) return dailyEntries;
+    return dailyEntries.filter((entry) =>
       `${entry.token} ${entry.id} ${entry.farmer}`.toLowerCase().includes(normalizedQuery),
     );
-  }, [query]);
+  }, [dailyEntries, query]);
 
   return (
     <div className="mt-6">
@@ -46,7 +80,7 @@ export default function QueueTable({ query }: { query: string }) {
           </thead>
           <tbody>
             {filteredEntries.map((entry) => (
-              <tr key={entry.token} className={`border-b border-gray-200 last:border-0 ${entry.status === "तौल जारी" ? "bg-[var(--saffron-t)]" : "bg-white"}`}>
+              <tr key={entry.id} className={`border-b border-gray-200 last:border-0 ${entry.tokenNumber === dailyRecord?.currentToken || entry.status === "तौल जारी" ? "bg-[var(--saffron-t)]" : "bg-white"}`}>
                 <td className="px-4 py-4 font-black text-gray-900">{entry.token}</td>
                 <td className="px-4 py-4">
                   <strong className="block font-black text-gray-900">{entry.farmer}</strong>
@@ -63,7 +97,7 @@ export default function QueueTable({ query }: { query: string }) {
                   {entry.status === "भुगतान पूर्ण" ? (
                     <button type="button" className="flex min-w-[140px] items-center justify-center rounded-lg bg-green-700 px-4 py-2 text-center font-bold text-white">पूर्ण</button>
                   ) : (
-                    <Link href={`${entry.status === "तौल जारी" ? "/officer/live-weighment" : "/officer/weighment"}?token=${entry.token.slice(1)}`} className={`flex min-w-[140px] items-center justify-center rounded-lg px-4 py-2 text-center font-bold text-white ${entry.status === "बुक्ड" ? "bg-primary-800 text-white hover:brightness-90" : entry.status === "तौल जारी" || entry.status === "चेक-इन" ? "bg-[var(--saffron)] hover:brightness-95" : "bg-[var(--civic)] hover:brightness-90"}`} style={entry.status === "बुक्ड" ? { backgroundColor: "#166534", color: "#FFFFFF" } : undefined}>
+                    <Link href={`${entry.status === "तौल जारी" ? "/officer/live-weighment" : "/officer/weighment"}?token=${entry.tokenNumber ?? ""}`} className={`flex min-w-[140px] items-center justify-center rounded-lg px-4 py-2 text-center font-bold text-white ${entry.status === "बुक्ड" ? "bg-primary-800 text-white hover:brightness-90" : entry.status === "तौल जारी" || entry.status === "चेक-इन" ? "bg-[var(--saffron)] hover:brightness-95" : "bg-[var(--civic)] hover:brightness-90"}`} style={entry.status === "बुक्ड" ? { backgroundColor: "#166534", color: "#FFFFFF" } : undefined}>
                       {entry.status === "तौल जारी" ? "तौल जारी रखें" : entry.status === "चेक-इन" ? "तौल शुरू करें" : "चेक-इन करें"}
                     </Link>
                   )}

@@ -1,12 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Sidebar from "@/components/layout/Sidebar";
 import { House } from "@phosphor-icons/react";
 import { useLanguage } from "@/lib/i18n";
-import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { DEFAULT_MANDI_ID, STORAGE_KEYS } from "@/lib/storage-keys";
+import type { TokenBoardState } from "@/lib/server/token-store";
 
 export default function OfficerAppLayout({
   children,
@@ -14,8 +15,11 @@ export default function OfficerAppLayout({
   children: React.ReactNode;
 }>) {
   const router = useRouter();
+  const pathname = usePathname();
   const { t } = useLanguage();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [dailySetupComplete, setDailySetupComplete] = useState(false);
+  const [dailySetupLoaded, setDailySetupLoaded] = useState(false);
 
   // 🔒 सिक्योरिटी गार्ड (Auth Logic)
   useEffect(() => {
@@ -34,9 +38,35 @@ export default function OfficerAppLayout({
     return () => window.cancelAnimationFrame(frameId);
   }, [router]);
 
+  useEffect(() => {
+    let active = true;
+    const refreshDailySetup = async () => {
+      try {
+        const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/daily-setup`, { cache: "no-store" });
+        if (!response.ok) throw new Error("Daily setup status unavailable");
+        const record = await response.json() as TokenBoardState;
+        if (active) setDailySetupComplete(Boolean(record.setupCompletedAt));
+      } catch {
+        if (active) setDailySetupComplete(false);
+      } finally {
+        if (active) setDailySetupLoaded(true);
+      }
+    };
+
+    void refreshDailySetup();
+    const intervalId = window.setInterval(() => void refreshDailySetup(), 15000);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
   if (isAuthenticated !== true) {
     return null; // जब तक चेक कर रहा है, खाली स्क्रीन
   }
+
+  const setupGuardedRoute = pathname === "/officer/queue" || pathname === "/officer/live-weighment";
+  const showSetupPrompt = setupGuardedRoute && (!dailySetupLoaded || !dailySetupComplete);
 
   return (
     <div className="officer-shell flex min-h-screen flex-col overflow-x-hidden bg-[var(--bg-body)]">
@@ -56,7 +86,14 @@ export default function OfficerAppLayout({
         <Sidebar />
         <div className="officer-content flex min-w-0 flex-1 flex-col overflow-visible">
         <main className="min-w-0 flex-1 overflow-y-auto">
-          {children}
+          {showSetupPrompt ? (
+            <section className="officer-page-shell">
+              <div className="rounded-xl border border-amber-200 bg-white p-6 shadow-sm">
+                <h1 className="text-xl font-black text-gray-900">कृपया पहले आज का सेटअप पूरा करें</h1>
+                <Link href="/officer/daily-setup" className="mt-4 inline-flex h-12 items-center rounded-lg bg-green-700 px-5 font-bold text-white hover:bg-green-800">दैनिक सेटअप खोलें</Link>
+              </div>
+            </section>
+          ) : children}
         </main>
       </div>
       </div>

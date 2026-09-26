@@ -14,7 +14,7 @@ const dailyFarmers = [
 export default function ReportsPage() {
   const { t } = useLanguage();
   return (
-    <main className="min-h-full bg-[#f4f9f4] p-6">
+    <main className="officer-page-shell">
       <header className="mb-6">
         <h1 className="text-3xl font-black text-gray-900">{t("weeklyReport")}</h1>
         <p className="mt-1 text-base font-semibold text-gray-600">{t("servedFarmers")}</p>

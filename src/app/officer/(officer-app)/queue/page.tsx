@@ -9,7 +9,7 @@ export default function QueuePage() {
   const { t } = useLanguage();
 
   return (
-    <main className="min-h-full bg-[#f4f9f4] p-6">
+    <main className="officer-page-shell">
       <header className="officer-page-head mb-6 flex flex-wrap items-end justify-between gap-6">
         <div>
           <h1 className="text-3xl font-black text-gray-900">{t("liveQueue")}</h1>

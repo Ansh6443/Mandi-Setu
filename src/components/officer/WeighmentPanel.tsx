@@ -4,7 +4,7 @@ import { CheckCircle, Scales } from "@phosphor-icons/react";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
 import { useEffect } from "react";
-import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { DEFAULT_MANDI_ID, STORAGE_KEYS } from "@/lib/storage-keys";
 
 const farmer = {
   name: "रमेश पवार",
@@ -19,6 +19,7 @@ export default function WeighmentPanel() {
   const router = useRouter();
   const [weight, setWeight] = useState("60");
   const [submitted, setSubmitted] = useState(false);
+  const [advanceError, setAdvanceError] = useState("");
   const [mspRates, setMspRates] = useState(defaultMspRates);
 
   useEffect(() => {
@@ -44,11 +45,21 @@ export default function WeighmentPanel() {
   const tax = gross * 0.01;
   const net = gross - tax;
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!(Number.isFinite(numericWeight) && numericWeight > 0)) return;
     setSubmitted(true);
-    router.push("/officer/payment-list");
+    try {
+      const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/token`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "advance" }),
+      });
+      if (!response.ok) throw new Error("Token advancement failed");
+      router.push("/officer/payment-list");
+    } catch {
+      setAdvanceError("टोकन आगे नहीं बढ़ा। अधिकारी डैशबोर्ड से अगला टोकन बुलाएं।");
+    }
   }
 
   return (
@@ -88,6 +99,7 @@ export default function WeighmentPanel() {
           {submitted ? "✓ दर्ज किया गया" : "J-Form जनरेट करें और DBT भेजें"}
         </button>
         {submitted && <p className="mt-3 text-sm font-medium text-green-700">✓ दर्ज किया गया</p>}
+        {advanceError && <p className="mt-3 text-sm font-semibold text-red-700" role="alert">{advanceError}</p>}
       </section>
 
       <section className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm">

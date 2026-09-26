@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -11,6 +12,8 @@ import {
 } from "@phosphor-icons/react";
 import LanguageSwitcher from "@/components/LanguageSwitcher";
 import { useLanguage } from "@/lib/i18n";
+import { DEFAULT_MANDI_ID } from "@/lib/storage-keys";
+import type { TokenBoardState } from "@/lib/server/token-store";
 
 const services = [
   {
@@ -41,9 +44,31 @@ const trustStats = [
 
 export default function HomePage() {
   const { t } = useLanguage();
+  const [liveTokenState, setLiveTokenState] = useState<TokenBoardState | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    const pollLiveToken = async () => {
+      try {
+        const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/daily-setup`, { cache: "no-store" });
+        if (!response.ok) return;
+        const state = await response.json() as TokenBoardState;
+        if (active) setLiveTokenState(state);
+      } catch {
+        if (active) setLiveTokenState(null);
+      }
+    };
+
+    void pollLiveToken();
+    const intervalId = window.setInterval(() => void pollLiveToken(), 15000);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
 
   const queueStats = [
-    { name: t("lucknowMandi"), token: "T - 114", waitMinutes: 18 },
+    { name: t("officerMandi"), token: "T - 046", waitMinutes: 18, live: true },
     { name: t("gorakhpurMandi"), token: "T - 067", waitMinutes: 9 },
     { name: t("kanpurMandi"), token: "T - 032", waitMinutes: 41 },
   ];
@@ -97,8 +122,6 @@ export default function HomePage() {
       <main className="page-shell">
         <section className="hero" id="hero">
           <div className="hero-copy">
-            
-
             <h1>
               {t("heroTitle")}
             </h1>
@@ -131,26 +154,37 @@ export default function HomePage() {
           <div className="hero-panel">
             <div className="panel-header">
               <span>{t("liveCentres")}</span>
-              <span className="live-indicator">
-                <span className="live-dot" />
-                {t("updating")}
+                <span className="live-indicator" style={{ color: liveTokenState?.setupCompletedAt && liveTokenState.mandiOpen ? undefined : "#64748b" }}>
+                <span className="live-dot" style={liveTokenState?.setupCompletedAt && liveTokenState.mandiOpen ? undefined : { background: "#94a3b8", boxShadow: "none" }} />
+                {liveTokenState === null ? t("updating") : liveTokenState.setupCompletedAt && liveTokenState.mandiOpen ? t("mandiOpen") : t("mandiClosed")}
               </span>
             </div>
 
             {queueStats.map((item) => (
-  <div key={item.name} className="queue-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-    <span className="queue-name" style={{ flex: 1 }}>{item.name}</span>
-    <span className="queue-token" style={{ flex: 1, textAlign: 'center' }}>{item.token}</span>
-    <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>
-      {`${item.waitMinutes} ${t("minWait")}`}
-    </span>
-  </div>
-))}
+              <div key={item.name} className="queue-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span className="queue-name" style={{ flex: 1 }}>{item.name}</span>
+                <span className="queue-token" style={{ flex: 1, textAlign: 'center' }} aria-live={item.live ? "polite" : undefined}>
+                  {item.live
+                    ? liveTokenState === null
+                      ? "…"
+                      : !liveTokenState.setupCompletedAt
+                        ? "आज का सेटअप बाकी है"
+                        : liveTokenState.currentToken === null
+                        ? "आज कोई और टोकन नहीं"
+                        : `T - ${String(liveTokenState.currentToken).padStart(2, "0")}`
+                    : item.token}
+                </span>
+                <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>
+                  {item.live && (!liveTokenState?.setupCompletedAt || liveTokenState.currentToken === null) ? "—" : `${item.waitMinutes} ${t("minWait")}`}
+                </span>
+              </div>
+            ))}
             <div className="panel-footnote">
               {t("sameBoard")}
             </div>
           </div>
         </section>
+
         <section className="services" id="services">
           <h2>{t("mainServices")}</h2>
           <p>{t("smartFarming")}</p>

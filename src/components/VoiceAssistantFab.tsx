@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { SpeakerHigh } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
