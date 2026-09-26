@@ -263,7 +263,7 @@ export default function CropQualityPanel() {
               disabled={isAnalyzing}
             >
               {isAnalyzing ? (
-                <>Analyzing with Gemini AI...</>
+                <>Analyzing crop health...</>
               ) : (
                 <><Check size={18} aria-hidden="true" /> {t("qualitySubmit")}</>
               )}
