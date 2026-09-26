@@ -173,19 +173,6 @@ export default function CropQualityPanel() {
         </div>
       </div>
 
-      <div className={`quality-progress ${qualityComplete ? "complete" : ""}`} aria-live="polite">
-        <span className="quality-progress-icon">
-          {qualityComplete ? <Check size={25} weight="bold" aria-hidden="true" /> : <Sparkle size={23} aria-hidden="true" />}
-        </span>
-        <span className="quality-progress-copy">
-          <strong>{qualityDemoMode ? t("qualityDemoComplete") : qualityComplete ? t("qualityReady") : t("qualityInProgress")}</strong>
-          <small>{qualityDemoMode ? t("qualityDemoNotice") : qualityComplete ? t("qualityReadyHint") : `${checkedQualityCount}/${qualityCriteria.length} ${t("qualityProgressHint")}`}</small>
-        </span>
-        <span className="quality-progress-track" role="progressbar" aria-label={t("qualityProgressHint")} aria-valuemin={0} aria-valuemax={qualityCriteria.length} aria-valuenow={checkedQualityCount}>
-          <span style={{ width: `${(checkedQualityCount / qualityCriteria.length) * 100}%` }} />
-        </span>
-      </div>
-
       <div className="quality-crop-row">
         <div className="quality-crop-picker">
           <label className="field-label" htmlFor="quality-crop">{t("qualityCrop")}</label>
@@ -222,6 +209,41 @@ export default function CropQualityPanel() {
         {qualityPhotoError && <p className="quality-photo-error" role="alert">{qualityPhotoError}</p>}
         <p className="quality-photo-note">{t("qualityPhotoPrivacy")}</p>
       </div>
+
+      <div className={`quality-progress ${qualityComplete ? "complete" : ""}`} aria-live="polite">
+        <span className="quality-progress-icon">
+          {qualityComplete ? <Check size={25} weight="bold" aria-hidden="true" /> : <Sparkle size={23} aria-hidden="true" />}
+        </span>
+        <span className="quality-progress-copy">
+          <strong>{qualityDemoMode ? t("qualityDemoComplete") : qualityComplete ? t("qualityReady") : t("qualityInProgress")}</strong>
+          <small>{qualityDemoMode ? t("qualityDemoNotice") : qualityComplete ? t("qualityReadyHint") : `${checkedQualityCount}/${qualityCriteria.length} ${t("qualityProgressHint")}`}</small>
+        </span>
+        <span className="quality-progress-track" role="progressbar" aria-label={t("qualityProgressHint")} aria-valuemin={0} aria-valuemax={qualityCriteria.length} aria-valuenow={checkedQualityCount}>
+          <span style={{ width: `${(checkedQualityCount / qualityCriteria.length) * 100}%` }} />
+        </span>
+      </div>
+
+      {analysisResult && (
+        <div className="analysis-result-box" style={{ marginTop: "1rem", padding: "1rem", background: "#f4f6f4", borderRadius: "8px", border: "1px solid #d0dcd0" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+            <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
+              <Sparkle size={20} weight="fill" color="#2e7d32" /> AI Diagnosis & Treatment Plan
+            </h3>
+            {audioBase64 && (
+              <button
+                type="button"
+                onClick={playAudioAnswer}
+                style={{ display: "flex", alignItems: "center", gap: "6px", background: "#2e7d32", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}
+              >
+                <SpeakerHigh size={18} weight="bold" /> Jawab Suniye (Listen)
+              </button>
+            )}
+          </div>
+          <div style={{ whiteSpace: "pre-wrap", fontSize: "0.95rem", lineHeight: "1.5" }}>
+            {analysisResult}
+          </div>
+        </div>
+      )}
 
       <div className="quality-checklist">
         {qualityCriteria.map((criterion) => (
@@ -269,29 +291,6 @@ export default function CropQualityPanel() {
               )}
             </button>
           )}
-        </div>
-      )}
-
-      {/* Display Gemini AI Analysis Result & Audio Play Button */}
-      {analysisResult && (
-        <div className="analysis-result-box" style={{ marginTop: "1rem", padding: "1rem", background: "#f4f6f4", borderRadius: "8px", border: "1px solid #d0dcd0" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-            <h3 style={{ margin: 0, display: "flex", alignItems: "center", gap: "6px" }}>
-              <Sparkle size={20} weight="fill" color="#2e7d32" /> AI Diagnosis & Treatment Plan
-            </h3>
-            {audioBase64 && (
-              <button
-                type="button"
-                onClick={playAudioAnswer}
-                style={{ display: "flex", alignItems: "center", gap: "6px", background: "#2e7d32", color: "#fff", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontWeight: 600 }}
-              >
-                <SpeakerHigh size={18} weight="bold" /> Jawab Suniye (Listen)
-              </button>
-            )}
-          </div>
-          <div style={{ whiteSpace: "pre-wrap", fontSize: "0.95rem", lineHeight: "1.5" }}>
-            {analysisResult}
-          </div>
         </div>
       )}
 
