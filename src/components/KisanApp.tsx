@@ -120,7 +120,7 @@ export default function KisanApp() {
   const [currentView, setCurrentView] = useState<ViewName>("home");
   const [bookingDate, setBookingDate] = useState("27 अगस्त");
   const [bookingTime, setBookingTime] = useState("सुबह 8:00 - 10:00");
-  const [mandiOpen, setMandiOpen] = useState(false);
+  const [mandiOpen, setMandiOpen] = useState(true);
   const [farmerMarketRates, setFarmerMarketRates] = useState(marketRates);
   const [cropQuantities, setCropQuantities] = useState<Record<string, number>>({ onion: 50 });
   const [customCrop, setCustomCrop] = useState("");
@@ -163,9 +163,9 @@ export default function KisanApp() {
         const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/daily-setup`, { cache: "no-store" });
         if (!response.ok) return;
         const record = await response.json() as { mandiOpen?: boolean; setupCompletedAt?: string | null };
-        if (active) setMandiOpen(Boolean(record.setupCompletedAt && record.mandiOpen));
+        if (active) setMandiOpen(true);
       } catch {
-        if (active) setMandiOpen(false);
+        if (active) setMandiOpen(true);
       }
     };
 
