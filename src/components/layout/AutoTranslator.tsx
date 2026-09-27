@@ -116,7 +116,10 @@ export default function AutoTranslator() {
             const original = originalTextMap.get(n)?.trim();
             if (!original) return;
 
-            const translated = dict[original] || getFallbackTranslation(original, language);
+            const apiTranslation = dict[original];
+            const translated = apiTranslation && apiTranslation !== original
+              ? apiTranslation
+              : getFallbackTranslation(original, language);
             if (translated && translated !== original) {
               const raw = originalTextMap.get(n)!;
               n.textContent = raw.replace(original, translated);
@@ -127,7 +130,10 @@ export default function AutoTranslator() {
             const original = originalPlaceholderMap.get(inp)?.trim();
             if (!original) return;
 
-            const translated = dict[original] || getFallbackTranslation(original, language);
+            const apiTranslation = dict[original];
+            const translated = apiTranslation && apiTranslation !== original
+              ? apiTranslation
+              : getFallbackTranslation(original, language);
             if (translated && translated !== original) {
               inp.placeholder = translated;
             }

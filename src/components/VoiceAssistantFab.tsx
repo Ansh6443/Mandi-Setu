@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { SpeakerHigh } from "@phosphor-icons/react";
+import { Robot } from "@phosphor-icons/react";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "@/lib/i18n";
 import VoiceAssistantModal from "@/components/VoiceAssistantModal";
@@ -19,7 +19,7 @@ export default function VoiceAssistantFab() {
         aria-label={t("voiceHelp") || "Voice Assistant"}
         onClick={() => setIsOpen(true)}
       >
-        <SpeakerHigh size={24} weight="bold" color="#fff" aria-hidden="true" />
+        <Robot size={24} weight="bold" color="#fff" aria-hidden="true" />
       </button>
 
       {isOpen && (

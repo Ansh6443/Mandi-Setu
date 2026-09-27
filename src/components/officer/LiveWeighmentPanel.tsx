@@ -34,13 +34,15 @@ export default function LiveWeighmentPanel() {
   const [captureAttempts, setCaptureAttempts] = useState(0);
   const [fallbackReason, setFallbackReason] = useState("");
   const [weight, setWeight] = useState("");
+  const [grade, setGrade] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [submittedAt, setSubmittedAt] = useState<string | null>(null);
+  const [receiptIssueFailed, setReceiptIssueFailed] = useState(false);
   const [mspRates, setMspRates] = useState(MSP_RATE);
   const redirectTimeout = useRef<number | null>(null);
   const validWeight = Number(weight) > 0;
   const fallbackActive = captureAttempts >= 2 && !photoTaken;
-  const canSubmit = Boolean(photoTaken && photoFile && validWeight && !submitted);
+  const canSubmit = Boolean(photoTaken && photoFile && validWeight && grade && !submitted);
   const mspRate = mspRates[farmer.commodity] ?? 0;
   const amount = validWeight ? Number(weight) * mspRate : 0;
 
@@ -81,33 +83,71 @@ export default function LiveWeighmentPanel() {
     event.target.value = "";
   }
 
-  function handleSubmitWeighment() {
+  async function handleSubmitWeighment() {
     if (!canSubmit) return;
-    // photo upload के समय नहीं, केवल सफल submit पर किसान की रसीद save होगी।
-    const submissionTime = new Date().toLocaleString("hi-IN");
+    // Receipt details and the evidence photo are registered together on successful submission.
+    const submissionTime = new Date().toLocaleString("hi-IN", { timeZone: "Asia/Kolkata" });
     setSubmitted(true);
     setSubmittedAt(submissionTime);
     if (photoPreview) {
+      const localReceipt = {
+        photo: photoPreview,
+        farmer: farmer.name,
+        bookingId: farmer.bookingId,
+        mandiName: "आज़ादपुर मंडी",
+        commodity: farmer.commodity,
+        grade,
+        weight,
+        mspRate,
+        amount,
+        paymentMethod: "DBT",
+        submittedAt: submissionTime,
+      };
       try {
+        const response = await fetch("/api/receipts", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            farmerName: farmer.name,
+            farmerId: farmer.bookingId,
+            mandiName: localReceipt.mandiName,
+            crop: farmer.commodity,
+            grade,
+            weightQuintals: Number(weight),
+            mspRate,
+            photo: photoPreview,
+          }),
+        });
+        if (!response.ok) throw new Error("Receipt registration failed");
+        const issuedReceipt = await response.json() as {
+          receiptId: string;
+          receiptNumber: string;
+          transactionId: string;
+          issuedAt: string;
+          totalAmount: number;
+          qrCode: string;
+          verificationUrl: string;
+        };
         window.localStorage.setItem(receiptKey, JSON.stringify({
-          photo: photoPreview,
-          farmer: farmer.name,
-          bookingId: farmer.bookingId,
-          commodity: farmer.commodity,
-          weight,
-          amount,
-          submittedAt: submissionTime,
+          ...localReceipt,
+          ...issuedReceipt,
         }));
+        setReceiptIssueFailed(false);
       } catch {
-        // The submission can still complete when browser storage is unavailable.
+        try {
+          window.localStorage.setItem(receiptKey, JSON.stringify(localReceipt));
+        } catch {
+          // The weighment can still complete if browser storage is unavailable.
+        }
+        setReceiptIssueFailed(true);
       }
     }
   }
 
- function handleSubmit(event: FormEvent<HTMLFormElement>) {
+ async function handleSubmit(event: FormEvent<HTMLFormElement>) {
   event.preventDefault();
   if (!canSubmit) return;
-  handleSubmitWeighment();
+  await handleSubmitWeighment();
   
   // सबमिट होने के 1.5 सेकंड बाद पेज बदलने का कोड
   redirectTimeout.current = window.setTimeout(() => {
@@ -120,7 +160,7 @@ export default function LiveWeighmentPanel() {
   }, []);
 
   return (
-   <form className="w-full max-w-2xl overflow-visible rounded-[18px] border border-gray-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.06)] pb-16 mb-10" onSubmit={handleSubmit}>
+  <form className="w-full max-w-[840px] overflow-visible rounded-[18px] border border-gray-200 bg-white p-6 shadow-[0_8px_24px_rgba(15,23,42,0.06)] pb-16 mb-10" onSubmit={handleSubmit}>
       <div className="space-y-4">
         <div className="flex items-start justify-between gap-5">
           <div className="min-w-0 leading-relaxed">
@@ -157,6 +197,23 @@ export default function LiveWeighmentPanel() {
         {fallbackActive && <div className="inline-flex rounded-lg bg-amber-50 px-3 py-2 text-sm font-bold text-amber-700">फ़ोटो के बिना दर्ज</div>}
 
         <div>
+          <label htmlFor="live-grade" className="mb-2 block text-sm font-bold text-gray-700">उपज का ग्रेड</label>
+          <select
+            id="live-grade"
+            value={grade}
+            onChange={(event) => setGrade(event.target.value)}
+            disabled={submitted}
+            required
+            className="h-[56px] w-full rounded-xl border border-gray-200 bg-white px-4 font-semibold text-gray-900 outline-none focus:border-green-700"
+          >
+            <option value="" disabled>ग्रेड चुनें</option>
+            <option value="A">A - उत्तम</option>
+            <option value="B">B - अच्छा</option>
+            <option value="C">C - सामान्य</option>
+          </select>
+        </div>
+
+        <div>
   <label htmlFor="live-weight" className="mb-2 block text-sm font-bold text-gray-700">वास्तविक तौल (क्विंटल में)</label>
   <input 
     id="live-weight" 
@@ -167,7 +224,7 @@ export default function LiveWeighmentPanel() {
     onChange={(event) => setWeight(event.target.value)}
     placeholder="वास्तविक तौल दर्ज करें" 
     disabled={submitted} 
-    className="h-14 w-full rounded-xl border border-gray-200 bg-white px-4 font-semibold text-gray-900 outline-none focus:border-green-700" 
+    className="h-[68px] w-full rounded-xl border border-gray-200 bg-white px-4 font-semibold text-gray-900 outline-none focus:border-green-700"
   />
 </div>
 
@@ -179,18 +236,19 @@ export default function LiveWeighmentPanel() {
             value={amount ? `₹ ${amount.toLocaleString("en-IN")}` : "₹ 0"}
             readOnly
             disabled={submitted}
-            className="h-14 w-full rounded-xl border border-gray-200 bg-gray-50 px-4 font-bold text-gray-700 outline-none"
+            className="h-[68px] w-full rounded-xl border border-gray-200 bg-gray-50 px-4 font-bold text-gray-700 outline-none"
           />
         </div>
 
         {submittedAt && <p className="text-xs font-semibold text-gray-500">दर्ज समय: {submittedAt}</p>}
+        {receiptIssueFailed && <p className="rounded-lg bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800" role="status">तौल दर्ज हुई, लेकिन verification QR जारी नहीं हो सका। कृपया रसीद को verified न मानें।</p>}
 
                 <div className="mt-6 block w-full">
           <button
             type="submit"
-            disabled={submitted || !photoTaken || !weight || Number(weight) <= 0}
+            disabled={submitted || !photoTaken || !weight || Number(weight) <= 0 || !grade}
             className={`flex w-full items-center justify-center gap-2.5 rounded-xl px-5 py-4 text-base font-bold transition-all ${
-              submitted || !photoTaken || !weight || Number(weight) <= 0
+              submitted || !photoTaken || !weight || Number(weight) <= 0 || !grade
                 ? "cursor-not-allowed border-2 border-dashed border-gray-300 bg-gray-50 text-gray-400"
                 : "border-2 border-green-700 bg-green-700 text-white shadow-md hover:bg-green-800 hover:shadow-lg active:scale-[0.99]"
             }`}
@@ -209,10 +267,10 @@ export default function LiveWeighmentPanel() {
                 <CheckCircle size={20} aria-hidden="true" />
                 ✓ दर्ज किया गया
               </div>
-            ) : !photoTaken || !weight || Number(weight) <= 0 ? (
+            ) : !photoTaken || !weight || Number(weight) <= 0 || !grade ? (
               <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-bold text-amber-700">
                 <WarningCircle size={16} aria-hidden="true" />
-                फ़ोटो लें और वज़न दर्ज करें
+                ग्रेड चुनें, फ़ोटो लें और वज़न दर्ज करें
               </div>
             ) : (
               <div className="flex w-full items-center justify-center gap-2 rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">

@@ -5,37 +5,11 @@ import Image from "next/image";
 import { useEffect, useRef, useState, type ChangeEvent } from "react";
 import { useLanguage } from "@/lib/i18n";
 
-type CropKey = "onion" | "wheat" | "potato" | "tomato" | "soybean";
-
-const cropCatalogEnglish: Record<CropKey, string> = {
-  onion: "Onion",
-  wheat: "Wheat",
-  potato: "Potato",
-  tomato: "Tomato",
-  soybean: "Soybean",
-};
-
 const qualityCriteria = ["qualityAppearance", "qualityDamage", "qualityCleanliness", "qualityMoisture"] as const;
-const qualityStandards: Record<CropKey, string> = {
-  onion: "qualityOnionStandard",
-  wheat: "qualityWheatStandard",
-  potato: "qualityPotatoStandard",
-  tomato: "qualityTomatoStandard",
-  soybean: "qualitySoybeanStandard",
-};
-const referencePrices: Record<CropKey, string> = {
-  onion: "₹1,850",
-  wheat: "₹2,275",
-  potato: "₹1,200",
-  tomato: "₹900",
-  soybean: "₹4,700",
-};
 
 export default function CropQualityPanel() {
-  const { t } = useLanguage();
-  const [qualityCrop, setQualityCrop] = useState<CropKey>("onion");
+  const { t, language } = useLanguage(); // language yahan se mil jayegi (jaise 'hindi', 'gujarati', etc.)
   const [qualityChecks, setQualityChecks] = useState<Record<string, boolean>>({});
-  const [qualityDemoMode, setQualityDemoMode] = useState(false);
   const [qualitySubmitted, setQualitySubmitted] = useState(false);
   const [qualityPhoto, setQualityPhoto] = useState<File | null>(null);
   const [qualityPhotoUrl, setQualityPhotoUrl] = useState<string | null>(null);
@@ -74,10 +48,7 @@ export default function CropQualityPanel() {
     setAnalysisResult(null);
     setAudioBase64(null);
     setAnalysisError(null);
-    if (qualityDemoMode) {
-      setQualityChecks({});
-      setQualityDemoMode(false);
-    }
+    setQualityChecks({});
     setQualitySubmitted(false);
     if (qualityPhotoUrlRef.current) URL.revokeObjectURL(qualityPhotoUrlRef.current);
     const photoUrl = URL.createObjectURL(photo);
@@ -86,30 +57,7 @@ export default function CropQualityPanel() {
     setQualityPhotoUrl(photoUrl);
   };
 
-  const runQualityDemo = () => {
-    setQualityChecks(Object.fromEntries(qualityCriteria.map((criterion) => [criterion, true])));
-    setQualityDemoMode(true);
-    setQualitySubmitted(false);
-    setAnalysisResult(null);
-    setAudioBase64(null);
-  };
-
-  const resetQualityForCrop = (crop: CropKey) => {
-    setQualityCrop(crop);
-    setQualityChecks({});
-    setQualityDemoMode(false);
-    setQualitySubmitted(false);
-    setQualityPhoto(null);
-    setQualityPhotoUrl(null);
-    setQualityPhotoError(null);
-    setAnalysisResult(null);
-    setAudioBase64(null);
-    setAnalysisError(null);
-    if (qualityPhotoUrlRef.current) URL.revokeObjectURL(qualityPhotoUrlRef.current);
-    qualityPhotoUrlRef.current = null;
-  };
-
-  // Function to send image to live Render backend & get audio/text response
+  // Function to send image and target language to live Render backend
   const handleAnalyzeCrop = async () => {
     if (!qualityPhoto) return;
 
@@ -119,6 +67,8 @@ export default function CropQualityPanel() {
     try {
       const formData = new FormData();
       formData.append("file", qualityPhoto);
+      // Pass the selected portal language to the backend for localized AI & audio response
+      formData.append("target_language", language || "Hindi");
 
       const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL || "https://kisan-q-backend.onrender.com";
       const apiEndpoint = `${apiBaseUrl.replace(/\/+$/, "")}/crop-disease/detect`;
@@ -143,6 +93,7 @@ export default function CropQualityPanel() {
         throw new Error(detail || "Failed to analyze crop image.");
       }
 
+      setQualityChecks(Object.fromEntries(qualityCriteria.map((criterion) => [criterion, true])));
       setAnalysisResult(data.analysis);
       if (data.audio_base64) {
         setAudioBase64(data.audio_base64);
@@ -155,7 +106,7 @@ export default function CropQualityPanel() {
     }
   };
 
-  // Play audio response for farmers
+  // Play localized audio response for farmers
   const playAudioAnswer = () => {
     if (!audioBase64) return;
     const audio = new Audio(`data:audio/mp3;base64,${audioBase64}`);
@@ -173,21 +124,6 @@ export default function CropQualityPanel() {
         </div>
       </div>
 
-      <div className="quality-crop-row">
-        <div className="quality-crop-picker">
-          <label className="field-label" htmlFor="quality-crop">{t("qualityCrop")}</label>
-          <select id="quality-crop" className="input-control quality-crop-select" value={qualityCrop} onChange={(event) => resetQualityForCrop(event.target.value as CropKey)}>
-            {Object.keys(cropCatalogEnglish).map((crop) => (
-              <option key={crop} value={crop}>{t(crop)} ({cropCatalogEnglish[crop as CropKey]})</option>
-            ))}
-          </select>
-        </div>
-        <div className="quality-reference" aria-live="polite">
-          <div><small>{t("qualityStandardLabel")}</small><strong>{t(qualityStandards[qualityCrop])}</strong></div>
-          <div><small>{t("qualityReferencePrice")}</small><strong>{referencePrices[qualityCrop]} / {t("quintal")}</strong></div>
-        </div>
-      </div>
-
       <div className="quality-photo-panel">
         <div className="quality-photo-copy">
           <strong><Sparkle size={18} aria-hidden="true" /> {t("qualityPhotoTitle")}</strong>
@@ -198,7 +134,6 @@ export default function CropQualityPanel() {
           <input ref={galleryInputRef} type="file" accept="image/*" hidden tabIndex={-1} onChange={selectQualityPhoto} />
           <button type="button" className="quality-camera-btn" onClick={() => cameraInputRef.current?.click()}><Camera size={18} aria-hidden="true" /> {t("qualityTakePhoto")}</button>
           <button type="button" className="quality-gallery-btn" onClick={() => galleryInputRef.current?.click()}><ImageSquare size={18} aria-hidden="true" /> {t("qualityChoosePhoto")}</button>
-          <button type="button" className="quality-demo-btn" onClick={runQualityDemo}>{t("qualityDemoTest")}</button>
         </div>
         {qualityPhotoUrl && qualityPhoto && (
           <div className="quality-photo-preview-wrap">
@@ -207,7 +142,6 @@ export default function CropQualityPanel() {
           </div>
         )}
         {qualityPhotoError && <p className="quality-photo-error" role="alert">{qualityPhotoError}</p>}
-        <p className="quality-photo-note">{t("qualityPhotoPrivacy")}</p>
       </div>
 
       <div className={`quality-progress ${qualityComplete ? "complete" : ""}`} aria-live="polite">
@@ -215,8 +149,8 @@ export default function CropQualityPanel() {
           {qualityComplete ? <Check size={25} weight="bold" aria-hidden="true" /> : <Sparkle size={23} aria-hidden="true" />}
         </span>
         <span className="quality-progress-copy">
-          <strong>{qualityDemoMode ? t("qualityDemoComplete") : qualityComplete ? t("qualityReady") : t("qualityInProgress")}</strong>
-          <small>{qualityDemoMode ? t("qualityDemoNotice") : qualityComplete ? t("qualityReadyHint") : `${checkedQualityCount}/${qualityCriteria.length} ${t("qualityProgressHint")}`}</small>
+          <strong>{qualityComplete ? t("qualityReady") : t("qualityInProgress")}</strong>
+          <small>{qualityComplete ? t("qualityReadyHint") : `${checkedQualityCount}/${qualityCriteria.length} ${t("qualityProgressHint")}`}</small>
         </span>
         <span className="quality-progress-track" role="progressbar" aria-label={t("qualityProgressHint")} aria-valuemin={0} aria-valuemax={qualityCriteria.length} aria-valuenow={checkedQualityCount}>
           <span style={{ width: `${(checkedQualityCount / qualityCriteria.length) * 100}%` }} />
@@ -253,8 +187,7 @@ export default function CropQualityPanel() {
               checked={Boolean(qualityChecks[criterion])}
               onChange={(event) => {
                 const isChecked = event.target.checked;
-                setQualityChecks((current) => qualityDemoMode ? { [criterion]: isChecked } : { ...current, [criterion]: isChecked });
-                setQualityDemoMode(false);
+                setQualityChecks((current) => ({ ...current, [criterion]: isChecked }));
                 setQualitySubmitted(false);
                 setAnalysisResult(null);
                 setAudioBase64(null);
@@ -275,7 +208,7 @@ export default function CropQualityPanel() {
           {qualitySubmitted ? (
             <p className="quality-submit-status" role="status">
               <CheckCircle size={20} aria-hidden="true" />
-              {qualityDemoMode ? t("qualityDemoSubmissionSaved") : "Analysis Complete!"}
+              {"Analysis Complete!"}
             </p>
           ) : (
             <button
@@ -294,7 +227,6 @@ export default function CropQualityPanel() {
         </div>
       )}
 
-      {/* Display Error if API fails */}
       {analysisError && (
         <p className="quality-photo-error" role="alert" style={{ marginTop: "1rem" }}>
           Error: {analysisError}

@@ -9,7 +9,7 @@ import { useLanguage } from "@/lib/i18n";
 export default function OfficerLoginPage() {
   const router = useRouter();
   const { t } = useLanguage();
-  const [mandi, setMandi] = useState("आज़ादपुर मंडी");
+  const [mandi, setMandi] = useState("azadpurMandi");
 
   function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -31,7 +31,8 @@ export default function OfficerLoginPage() {
           <input className="inp-basic" placeholder="DOCA-OFF-2291" defaultValue="DOCA-OFF-2291" />
           <label className="f-label">{t("assignedMandi")}</label>
           <select className="inp-basic" value={mandi} onChange={(event) => setMandi(event.target.value)}>
-            <option>आज़ादपुर मंडी</option><option>गाज़ीपुर सेंटर</option>
+            <option value="azadpurMandi">{t("azadpurMandi")}</option>
+            <option value="gazipurCenter">{t("gazipurCenter")}</option>
           </select>
           <label className="f-label">{t("securePin")}</label>
           <input className="inp-basic pin-input" type="password" maxLength={6} placeholder="• • • • • •" defaultValue="221199" />

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, CalendarBlank, Check, CaretRight, CreditCard, House, Leaf, LockKey, MapPin, Phone, Plus, ShieldCheck, SignOut, SpeakerHigh, CheckCircle, User } from "@phosphor-icons/react";
+import { Bell, CalendarBlank, Check, CaretRight, Copy, CreditCard, DownloadSimple, House, Leaf, LockKey, MapPin, Phone, Plus, ShieldCheck, SignOut, CheckCircle, User } from "@phosphor-icons/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
@@ -12,6 +12,27 @@ import { DEFAULT_MANDI_ID, DEMO_FARMER_ID, receiptStorageKey, STORAGE_KEYS } fro
 type AuthStep = "mobile" | "mobileOtp" | "identity" | "identityOtp";
 type ViewName = "home" | "book" | "status" | "quality" | "payment" | "profile" | "receipt" | "identity" | "identityOtp";
 type CropKey = "onion" | "wheat" | "potato" | "tomato" | "soybean";
+type StoredReceipt = {
+  photo?: string;
+  farmer?: string;
+  bookingId?: string;
+  mandiName?: string;
+  commodity?: string;
+  grade?: string;
+  weight?: string | number;
+  weightQuintals?: number;
+  mspRate?: number;
+  amount?: number;
+  totalAmount?: number;
+  paymentMethod?: string;
+  submittedAt?: string;
+  receiptId?: string;
+  receiptNumber?: string;
+  transactionId?: string;
+  issuedAt?: string;
+  qrCode?: string;
+  verificationUrl?: string;
+};
 
 const cropCatalog: Record<CropKey, string> = {
   onion: "प्याज",
@@ -74,6 +95,14 @@ const marketRates = [
 ];
 
 const statusSteps = ["registered", "checkIn", "qualityWeight", "auctionApproved", "dbtPayment"] as const;
+const statusStepDescriptions = [
+  "स्लॉट कन्फर्म। कृपया तय समय पर मंडी पहुँचें।",
+  "मंडी पहुँचकर गेट पर अपना टोकन नंबर दिखाएं और चेक-इन करें।",
+  "आपकी उपज की गुणवत्ता जांची जाएगी और तौल पूरी की जाएगी।",
+  "नीलामी में सबसे अच्छा भाव मिलने पर उपज स्वीकृत की जाएगी।",
+  "भुगतान राशि सीधे आपके बैंक खाते में ट्रांसफर कर दी जाएगी।",
+] as const;
+
 export default function KisanApp() {
   const { language, t } = useLanguage();
   const router = useRouter();
@@ -98,9 +127,33 @@ export default function KisanApp() {
   const [customCropQty, setCustomCropQty] = useState("");
   const [bookingDone, setBookingDone] = useState(false);
   const [receiptPhoto, setReceiptPhoto] = useState<string | null>(null);
-  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [storedReceipt, setStoredReceipt] = useState<StoredReceipt | null>(null);
+  const [copiedTxId, setCopiedTxId] = useState(false);
+  const [copiedFarmerId, setCopiedFarmerId] = useState(false);
   // यह identifier officer के farmer.bookingId से बिल्कुल समान होना MUST है, तभी receipt मिल पाएगी।
   const receiptKey = receiptStorageKey(farmerId);
+
+  const transactionId = storedReceipt?.transactionId ?? "TXN206927145603";
+
+  const handleCopyTransactionId = async () => {
+    try {
+      await navigator.clipboard.writeText(transactionId);
+      setCopiedTxId(true);
+      window.setTimeout(() => setCopiedTxId(false), 1200);
+    } catch {
+      setCopiedTxId(false);
+    }
+  };
+
+  const handleCopyFarmerId = async () => {
+    try {
+      await navigator.clipboard.writeText(t("farmerIdValue"));
+      setCopiedFarmerId(true);
+      window.setTimeout(() => setCopiedFarmerId(false), 1200);
+    } catch {
+      setCopiedFarmerId(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -165,15 +218,16 @@ export default function KisanApp() {
   useEffect(() => {
     const readReceiptPhoto = (storedValue: string | null) => {
       try {
-        const receipt = storedValue ? JSON.parse(storedValue) as { photo?: string } : null;
+        const receipt = storedValue ? JSON.parse(storedValue) as StoredReceipt : null;
+        setStoredReceipt(receipt);
         setReceiptPhoto(receipt?.photo ?? null);
       } catch {
+        setStoredReceipt(null);
         setReceiptPhoto(null);
       }
     };
 
-    // 화면을 새로 열거나 새로고침해도 현재 किसान की saved receipt पढ़ी जाएगी।
-    if (currentView === "receipt") readReceiptPhoto(window.localStorage.getItem(receiptKey));
+    if (currentView === "receipt" || currentView === "payment") readReceiptPhoto(window.localStorage.getItem(receiptKey));
     const handleReceiptStorage = (event: StorageEvent) => {
       // केवल इसी किसान की key बदलने पर J-Form की फोटो update होगी।
       if (event.key === receiptKey) readReceiptPhoto(event.newValue);
@@ -185,44 +239,77 @@ export default function KisanApp() {
     };
   }, [currentView, receiptKey]);
 
+  const handleDownloadReceipt = () => {
+    let receipt = storedReceipt;
+    try {
+      const saved = window.localStorage.getItem(receiptKey);
+      if (saved) receipt = JSON.parse(saved) as StoredReceipt;
+    } catch {
+      receipt = storedReceipt;
+    }
+
+    const escapeHtml = (value: unknown) => String(value ?? "—").replace(/[&<>"']/g, (character) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;",
+    })[character] ?? character);
+    const amount = Number(receipt?.totalAmount ?? receipt?.amount ?? 90090);
+    const number = (value: unknown) => Number(value ?? 0).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    const evidence = typeof receipt?.photo === "string" && /^data:image\/(?:jpeg|png|webp);base64,/i.test(receipt.photo)
+      ? `<img class="evidence-photo" src="${receipt.photo}" alt="अधिकारी द्वारा अपलोड की गई कांटे की फोटो">`
+      : `<p class="no-photo">अधिकारी की वेटब्रिज फोटो उपलब्ध नहीं है।</p>`;
+    const qr = typeof receipt?.qrCode === "string" && /^data:image\/png;base64,/i.test(receipt.qrCode)
+      ? `<img class="qr" src="${receipt.qrCode}" alt="रसीद सत्यापन QR code">`
+      : `<p class="no-qr">Server verification QR जारी नहीं हुआ। यह रसीद verified नहीं है।</p>`;
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    printWindow.document.open();
+    printWindow.document.write(`<!doctype html>
+      <html lang="hi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>मंडी सेतु - भुगतान रसीद</title>
+      <style>
+        @page { size: A4; margin: 12mm; }
+        * { box-sizing: border-box; }
+        body { margin: 0; color: #17231d; font: 14px/1.5 Arial, "Noto Sans Devanagari", sans-serif; }
+        .receipt { width: 100%; max-width: 780px; margin: 0 auto; padding: 22px; border: 1px solid #cfded4; border-radius: 12px; }
+        header { display: flex; justify-content: space-between; gap: 18px; align-items: flex-start; padding-bottom: 14px; border-bottom: 1px dashed #95aa9c; }
+        h1 { margin: 0; font-size: 23px; line-height: 1.3; } .brand { margin: 0 0 3px; color: #1b7a4b; font-size: 15px; font-weight: 800; }
+        .receipt-meta { text-align: right; font-size: 12px; } .receipt-meta strong { display: block; font-size: 14px; }
+        h2 { margin: 16px 0 8px; font-size: 15px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px 18px; }
+        .field { min-width: 0; padding: 4px 0; } .label { color: #52645a; font-size: 12px; } .value { margin-top: 2px; font-size: 14px; font-weight: 700; overflow-wrap: anywhere; }
+        .total { margin: 16px 0; padding: 13px 16px; border: 1px solid #b5d7c2; border-radius: 10px; background: #eef8f1; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+        .total span { font-weight: 700; } .total strong { color: #155e38; font-size: 24px; }
+        .statuses { display: flex; flex-wrap: wrap; gap: 8px; margin: 10px 0 14px; } .pill { border-radius: 999px; background: #eafaf1; color: #0d4d37; padding: 5px 10px; font-size: 12px; font-weight: 700; }
+        .bottom { display: grid; grid-template-columns: 1fr 120px; align-items: center; gap: 14px; border-top: 1px dashed #95aa9c; padding-top: 12px; }
+        .evidence-photo { display: block; width: 100%; max-height: 180px; object-fit: contain; border: 1px solid #d5ded8; border-radius: 7px; }
+        .qr { width: 94px; height: 94px; display: block; margin: 0 auto; } .verify { text-align: center; color: #52645a; font-size: 12px; }
+        .no-photo, .no-qr { color: #52645a; font-size: 12px; } .disclaimer { margin-top: 8px; font-size: 12px; color: #52645a; }
+        footer { margin-top: 12px; padding-top: 9px; border-top: 1px solid #d5ded8; display: flex; justify-content: space-between; gap: 12px; font-size: 12px; }
+        .print-action { display: block; margin: 18px auto 0; padding: 10px 16px; border: 0; border-radius: 8px; background: #1b7a4b; color: white; font-size: 14px; font-weight: 700; }
+        @media print { .receipt { max-width: none; margin: 0; padding: 0; border: 0; } .print-action { display: none; } }
+        @media (max-width: 580px) { .receipt { padding: 16px; } .grid { grid-template-columns: 1fr 1fr; } header { flex-wrap: wrap; } }
+      </style></head><body><main class="receipt">
+      <header><div><p class="brand">मंडी सेतु · भारत मंडी सेवा</p><h1>भुगतान रसीद</h1></div><div class="receipt-meta"><strong>रसीद नं.: ${escapeHtml(receipt?.receiptNumber ?? "जारी नहीं")}</strong><span>दिनांक-समय: ${escapeHtml(receipt?.issuedAt ? new Date(receipt.issuedAt).toLocaleString("hi-IN", { timeZone: "Asia/Kolkata" }) : receipt?.submittedAt ?? "—")}</span></div></header>
+      <h2>किसान विवरण</h2><section class="grid"><div class="field"><div class="label">किसान का नाम</div><div class="value">${escapeHtml(receipt?.farmer ?? "राम कुमार")}</div></div><div class="field"><div class="label">किसान आईडी</div><div class="value">${escapeHtml(receipt?.bookingId ?? t("farmerIdValue"))}</div></div><div class="field"><div class="label">मंडी</div><div class="value">${escapeHtml(receipt?.mandiName ?? "आज़ादपुर मंडी")}</div></div></section>
+      <h2>फसल एवं तौल विवरण</h2><section class="grid"><div class="field"><div class="label">फसल</div><div class="value">${escapeHtml(receipt?.commodity ?? "—")}</div></div><div class="field"><div class="label">ग्रेड</div><div class="value">${escapeHtml(receipt?.grade ?? "—")}</div></div><div class="field"><div class="label">वेटब्रिज तौल</div><div class="value">${number(receipt?.weightQuintals ?? receipt?.weight)} क्विंटल</div></div><div class="field"><div class="label">MSP दर / क्विंटल</div><div class="value">₹${number(receipt?.mspRate)}</div></div></section>
+      <section class="total"><span>कुल भुगतान राशि</span><strong>₹${number(amount)}</strong></section>
+      <section class="grid"><div class="field"><div class="label">भुगतान माध्यम</div><div class="value">${escapeHtml(receipt?.paymentMethod ?? "DBT")}</div></div><div class="field"><div class="label">लेनदेन आईडी</div><div class="value">${escapeHtml(receipt?.transactionId ?? transactionId)}</div></div></section>
+      <div class="statuses"><span class="pill">✓ अनुरोध स्वीकृत</span><span class="pill">✓ राशि सुरक्षित</span><span class="pill">✓ DBT भुगतान</span></div>
+      <section class="bottom"><div><h2>वेटब्रिज फोटो साक्ष्य</h2>${evidence}<p class="disclaimer">यह computer-generated रसीद है; हस्ताक्षर आवश्यक नहीं।</p></div><div class="verify">${qr}<span>सत्यापन के लिए scan करें</span></div></section>
+      <footer><span>सहायता हेल्पलाइन: 1800-180-1551</span><span>${escapeHtml(receipt?.receiptNumber ?? "मंडी सेतु")}</span></footer>
+      <button class="print-action" type="button" onclick="window.print()">प्रिंट करें / PDF में सेव करें</button>
+      </main><script>window.addEventListener("load", () => { window.focus(); window.print(); });</script></body></html>`);
+    printWindow.document.close();
+  };
+
   const validMobile = mobile.replace(/\D/g, "").length === 10;
   const validOtp = mobileOtp.replace(/\D/g, "").length === 6;
   const validAadhaar = aadhaar.replace(/\D/g, "").length === 12;
   const validFarmerId = farmerId.trim().length > 5;
   const validIdentityOtp = identityOtp.replace(/\D/g, "").length === 6;
-
-  const openReceipt = () => {
-    // openReceipt केवल scoped key पढ़ता है; यह कभी localStorage clear नहीं करता।
-    setReceiptPhoto(null);
-    try {
-      const storedReceipt = window.localStorage.getItem(receiptKey);
-      if (storedReceipt) {
-        const receipt = JSON.parse(storedReceipt) as { photo?: string };
-        setReceiptPhoto(receipt.photo ?? null);
-      }
-    } catch {
-      setReceiptPhoto(null);
-    }
-    navigateToView("receipt");
-  };
-
-  const speakReceipt = () => {
-    if (!("speechSynthesis" in window)) return;
-
-    if (isSpeaking) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-      return;
-    }
-
-    const announcement = new SpeechSynthesisUtterance(t("paymentComplete"));
-    announcement.lang = language === "en" ? "en-IN" : `${language}-IN`;
-    announcement.rate = 0.9;
-    announcement.onstart = () => setIsSpeaking(true);
-    announcement.onend = () => setIsSpeaking(false);
-    announcement.onerror = () => setIsSpeaking(false);
-    window.speechSynthesis.speak(announcement);
-  };
 
   const bookingSummary = useMemo(() => {
     const entries = Object.entries(cropQuantities).map(([key, qty]) => ({
@@ -806,7 +893,7 @@ export default function KisanApp() {
                   <div className="timeline-dot" />
                   <div>
                     <strong>{t(step)}</strong>
-                    {index === 0 && <p>{t("slotConfirmed")}</p>}
+                    <p>{statusStepDescriptions[index]}</p>
                   </div>
                 </div>
               ))}
@@ -817,32 +904,65 @@ export default function KisanApp() {
         {currentView === "quality" && <CropQualityPanel />}
 
         {currentView === "payment" && (
-          <div className="panel-card">
-            <div className="payment-banner">{t("paymentNotice")}</div>
-            <div className="payment-header">
-              <div>
-                <small>प्याज (50.5 Q)</small>
-                <h2>₹90,090</h2>
-                <span className="success-tag"><CheckCircle size={18} aria-hidden="true" /> {t("paymentSuccessful")}</span>
+          <div className="panel-card payment-success-card">
+            <div className="payment-success-top">
+              <div className="payment-success-badge" aria-hidden="true">
+                <CheckCircle size={30} weight="fill" />
               </div>
-              <button
-  type="button"
-  className="icon-btn speaker-btn flex items-center justify-center"
-  aria-label={isSpeaking ? t("stopSpeaking") : t("speakPayment")}
-  aria-pressed={isSpeaking}
-  onClick={speakReceipt}
->
-  <SpeakerHigh size={22} weight="regular" aria-hidden="true" />
-</button>
+              <div className="payment-success-amount">₹{Number(storedReceipt?.totalAmount ?? storedReceipt?.amount ?? 90090).toLocaleString("en-IN")}</div>
+              <div className="payment-success-status">
+                <span className="payment-success-status-icon"><ShieldCheck size={14} weight="fill" aria-hidden="true" /></span>
+                <span>भुगतान सफल</span>
+              </div>
             </div>
 
-            <div className="timeline compact">
-              <div className="timeline-item done"><div className="timeline-dot" /><div><strong>{t("approved")}</strong></div></div>
-              <div className="timeline-item done"><div className="timeline-dot" /><div><strong>{t("escrow")}</strong></div></div>
-              <div className="timeline-item done"><div className="timeline-dot" /><div><strong>{t("deposited")}</strong></div></div>
+            <div className="payment-success-list">
+              <div className="payment-success-item">
+                <span className="payment-success-icon" aria-hidden="true"><Check size={15} weight="bold" /></span>
+                <div className="payment-success-copy">
+                  <div className="payment-success-title">स्वीकृत</div>
+                  <div className="payment-success-subtitle">भुगतान अनुरोध स्वीकृत हुआ</div>
+                </div>
+              </div>
+
+              <div className="payment-success-item">
+                <span className="payment-success-icon" aria-hidden="true"><Check size={15} weight="bold" /></span>
+                <div className="payment-success-copy">
+                  <div className="payment-success-title">राशि रोकी गई</div>
+                  <div className="payment-success-subtitle">राशि अस्थायी रूप से सुरक्षित खाते में रोकी गई</div>
+                </div>
+              </div>
+
+              <div className="payment-success-item">
+                <span className="payment-success-icon" aria-hidden="true"><Check size={15} weight="bold" /></span>
+                <div className="payment-success-copy">
+                  <div className="payment-success-title">खाते में जमा</div>
+                  <div className="payment-success-subtitle">राशि लाभार्थी के खाते में जमा हुई</div>
+                </div>
+              </div>
             </div>
 
-            <button type="button" className="secondary-btn full" onClick={openReceipt}>{t("viewJForm")}</button>
+            <div className="payment-success-footer">
+              <div className="payment-success-account">
+                <div>
+                  <div className="payment-success-account-label">लेनदेन आईडी</div>
+                  <div className="payment-success-account-value">{transactionId}</div>
+                </div>
+                <button
+                  type="button"
+                  className={`payment-success-copy-btn${copiedTxId ? " is-copied" : ""}`}
+                  aria-label="Transaction ID copy"
+                  onClick={handleCopyTransactionId}
+                >
+                  {copiedTxId ? <Check size={17} weight="bold" aria-hidden="true" /> : <Copy size={17} weight="regular" aria-hidden="true" />}
+                </button>
+              </div>
+
+              <button type="button" className="payment-success-download-btn" aria-label="Download receipt" onClick={handleDownloadReceipt}>
+                <DownloadSimple size={17} weight="bold" aria-hidden="true" />
+                <span>रसीद डाउनलोड करें</span>
+              </button>
+            </div>
           </div>
         )}
 
@@ -872,40 +992,39 @@ export default function KisanApp() {
         )}
 
         {currentView === "profile" && (
-         <div className="panel-card profile-card max-w-2xl mx-auto rounded-[24px] p-6 md:p-8 mt-8">
+          <div className="panel-card profile-card max-w-2xl mx-auto">
             <div className="profile-language-switcher">
               <LanguageSwitcher />
             </div>
             <div className="profile-top">
               <div className="avatar">RK</div>
               <div>
-                <h2>राम कुमार <span className="verified-pill">✓ {t("verified")}</span></h2>
-                <div className="profile-id">{t("farmerIdLabel")}: MH-26032-4812</div>
+                <h2>राम कुमार <span className="verified-pill"><Check size={14} weight="bold" aria-hidden="true" />{t("verified")}</span></h2>
               </div>
             </div>
 
+            <button type="button" className="profile-id" onClick={handleCopyFarmerId} aria-label="किसान आईडी कॉपी करें">
+              <span>{t("farmerIdLabel")}: {t("farmerIdValue")}</span>
+              {copiedFarmerId ? <Check size={17} weight="bold" aria-hidden="true" /> : <Copy size={17} aria-hidden="true" />}
+            </button>
+
             <div className="profile-location">
-              <MapPin size={16} />
+              <MapPin size={16} aria-hidden="true" />
               {t("farmerLocation")}
             </div>
 
-            <div className="security-box">
-              <ShieldCheck size={18} />
+            <div className="security-box profile-bank-card">
+              <ShieldCheck size={18} aria-hidden="true" />
               <div>
                 <strong>{t("bankLinked")}</strong>
                 <small>{t("bankName")}</small>
               </div>
             </div>
 
-            <button 
-  type="button" 
-  className="danger-btn" 
-  style={{ marginTop: '24px' }} 
-  onClick={handleFarmerLogout}
->
-  <SignOut size={18} />
-  {t("closeAccount")}
-</button>
+            <button type="button" className="profile-logout-btn" onClick={handleFarmerLogout}>
+              <SignOut size={18} aria-hidden="true" />
+              {t("closeAccount")}
+            </button>
           </div>
         )}
       </main>

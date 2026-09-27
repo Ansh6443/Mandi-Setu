@@ -39,7 +39,7 @@ const services = [
 const trustStats = [
   { value: "120+", label: "connectedMandis" as const },
   { value: "~40%", label: "waitReduction" as const },
-  { value: "3+", label: "availableLanguages" as const },
+  { value: "10+", label: "availableLanguages" as const },
 ];
 
 export default function HomePage() {
@@ -68,9 +68,9 @@ export default function HomePage() {
   }, []);
 
   const queueStats = [
-    { name: t("officerMandi"), token: "T - 046", waitMinutes: 18, live: true },
-    { name: t("gorakhpurMandi"), token: "T - 067", waitMinutes: 9 },
-    { name: t("kanpurMandi"), token: "T - 032", waitMinutes: 41 },
+    { name: t("officerMandi"), token: "T - 01", waitMinutes: 5, live: true, pendingSetup: false },
+    { name: t("gorakhpurMandi"), token: "T - 067", waitMinutes: 9, live: false, pendingSetup: false },
+    { name: t("kanpurMandi"), token: "T - 032", waitMinutes: 41, live: false, pendingSetup: false },
   ];
 
   return (
@@ -165,17 +165,11 @@ export default function HomePage() {
                 <span className="queue-name" style={{ flex: 1 }}>{item.name}</span>
                 <span className="queue-token" style={{ flex: 1, textAlign: 'center' }} aria-live={item.live ? "polite" : undefined}>
                   {item.live
-                    ? liveTokenState === null
-                      ? "…"
-                      : !liveTokenState.setupCompletedAt
-                        ? "आज का सेटअप बाकी है"
-                        : liveTokenState.currentToken === null
-                        ? "आज कोई और टोकन नहीं"
-                        : `T - ${String(liveTokenState.currentToken).padStart(2, "0")}`
+                    ? item.token
                     : item.token}
                 </span>
                 <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>
-                  {item.live && (!liveTokenState?.setupCompletedAt || liveTokenState.currentToken === null) ? "—" : `${item.waitMinutes} ${t("minWait")}`}
+                  {item.waitMinutes} {t("minWait")}
                 </span>
               </div>
             ))}
