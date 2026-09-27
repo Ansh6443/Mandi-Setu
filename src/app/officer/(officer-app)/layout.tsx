@@ -54,7 +54,7 @@ export default function OfficerAppLayout({
     };
 
     void refreshDailySetup();
-    const intervalId = window.setInterval(() => void refreshDailySetup(), 15000);
+    const intervalId = window.setInterval(() => void refreshDailySetup(), 3000);
     return () => {
       active = false;
       window.clearInterval(intervalId);

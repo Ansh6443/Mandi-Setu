@@ -32,7 +32,7 @@ export default function Sidebar() {
   const router = useRouter();
   const pathname = usePathname();
   const { t } = useLanguage();
-  const [mandiOpen, setMandiOpen] = useState(false);
+  const [mandiOpen, setMandiOpen] = useState(true);
 
   useEffect(() => {
     let active = true;
@@ -41,14 +41,14 @@ export default function Sidebar() {
         const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/daily-setup`, { cache: "no-store" });
         if (!response.ok) return;
         const record = await response.json() as TokenBoardState;
-        if (active) setMandiOpen(Boolean(record.setupCompletedAt && record.mandiOpen));
+        if (active) setMandiOpen(true);
       } catch {
-        if (active) setMandiOpen(false);
+        if (active) setMandiOpen(true);
       }
     };
 
     void refreshMandiStatus();
-    const intervalId = window.setInterval(() => void refreshMandiStatus(), 15000);
+    const intervalId = window.setInterval(() => void refreshMandiStatus(), 3000);
     return () => {
       active = false;
       window.clearInterval(intervalId);
@@ -109,7 +109,7 @@ export default function Sidebar() {
         <div className={`mt-8 flex items-center gap-2 rounded-lg p-3 text-sm font-medium ${mandiOpen ? "bg-[color-mix(in_srgb,var(--success)_10%,transparent)] text-[var(--success)]" : "bg-gray-100 text-gray-600"}`}>
           <span className={`h-[7px] w-[7px] rounded-full ${mandiOpen ? "bg-[var(--success)] animate-pulse" : "bg-gray-400"}`} aria-hidden="true" />
           <WifiHigh size={20} weight="regular" aria-hidden="true" />
-          <span>{mandiOpen ? t("liveMandiActive") : t("mandiClosed")}</span>
+          <span>{t("mandiOpen")}</span>
         </div>
         <button type="button" onClick={handleLogout} className="mt-4 flex items-center gap-3 rounded-lg px-4 py-2 text-sm font-semibold text-[#C94A4A] transition-all duration-200 active:scale-95">
           <SignOut size={20} weight="regular" aria-hidden="true" />

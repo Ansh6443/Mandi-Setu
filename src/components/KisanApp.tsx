@@ -126,6 +126,7 @@ export default function KisanApp() {
   const [customCrop, setCustomCrop] = useState("");
   const [customCropQty, setCustomCropQty] = useState("");
   const [bookingDone, setBookingDone] = useState(false);
+  const [bookingError, setBookingError] = useState("");
   const [receiptPhoto, setReceiptPhoto] = useState<string | null>(null);
   const [storedReceipt, setStoredReceipt] = useState<StoredReceipt | null>(null);
   const [copiedTxId, setCopiedTxId] = useState(false);
@@ -169,7 +170,7 @@ export default function KisanApp() {
     };
 
     void refreshMandiStatus();
-    const intervalId = window.setInterval(() => void refreshMandiStatus(), 15000);
+    const intervalId = window.setInterval(() => void refreshMandiStatus(), 3000);
     return () => {
       active = false;
       window.clearInterval(intervalId);
@@ -361,6 +362,11 @@ export default function KisanApp() {
 
   const doBooking = () => {
     if (bookingSummary.length === 0) return;
+    if (!mandiOpen) {
+      setBookingError(language === "en" ? "Mandi is currently closed. Please try again when it is open." : "मंडी अभी बंद है। खुलने के बाद फिर कोशिश करें।");
+      return;
+    }
+    setBookingError("");
     setBookingDone(true);
     navigateToView("identity");
   };
@@ -869,7 +875,9 @@ export default function KisanApp() {
               ))}
             </div>
 
-            <button className="primary-btn full" onClick={doBooking}>{t("secureBooking")}</button>
+            {!mandiOpen && <p role="status" className="text-sm font-semibold text-gray-600">{language === "en" ? "Mandi is currently closed. Booking will be available when it opens." : "मंडी अभी बंद है। खुलने के बाद बुकिंग उपलब्ध होगी।"}</p>}
+            {bookingError && <p role="alert" className="text-sm font-semibold text-red-700">{bookingError}</p>}
+            <button className="primary-btn full disabled:cursor-not-allowed disabled:opacity-50" onClick={doBooking} disabled={!mandiOpen}>{t("secureBooking")}</button>
           </div>
         )}
 

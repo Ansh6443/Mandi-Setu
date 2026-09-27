@@ -1,4 +1,4 @@
-import { getTokenState, setupDailyMandi } from "@/lib/server/token-store";
+import { getTokenState, setMandiOpen, setupDailyMandi } from "@/lib/server/token-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -22,6 +22,28 @@ export async function GET(_request: Request, { params }: RouteContext) {
   return Response.json(getTokenState(mandiId), {
     headers: { "Cache-Control": "no-store, max-age=0" },
   });
+}
+
+export async function PATCH(request: Request, { params }: RouteContext) {
+  const { mandiId } = await params;
+  if (!isValidMandiId(mandiId)) return Response.json({ error: "Invalid mandi id" }, { status: 400 });
+
+  let body: { mandiOpen?: unknown };
+  try {
+    body = await request.json();
+  } catch {
+    return Response.json({ error: "Invalid request body" }, { status: 400 });
+  }
+
+  const current = getTokenState(mandiId);
+  if (!current.setupCompletedAt) {
+    return Response.json({ error: "Complete today's setup before changing mandi status" }, { status: 409 });
+  }
+  if (typeof body.mandiOpen !== "boolean") {
+    return Response.json({ error: "Invalid mandi status" }, { status: 400 });
+  }
+
+  return Response.json(setMandiOpen(mandiId, body.mandiOpen));
 }
 
 export async function POST(request: Request, { params }: RouteContext) {

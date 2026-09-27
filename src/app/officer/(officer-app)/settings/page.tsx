@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { STORAGE_KEYS } from "@/lib/storage-keys";
+import { DEFAULT_MANDI_ID, STORAGE_KEYS } from "@/lib/storage-keys";
+import type { TokenBoardState } from "@/lib/server/token-store";
 import { useLanguage } from "@/lib/i18n";
 
 const ratesStorageKey = STORAGE_KEYS.mspRates;
@@ -23,6 +24,9 @@ const cropEmojis: Record<string, string> = {
 
 export default function SettingsPage() {
   const [isOpen, setIsOpen] = useState(true);
+  const [statusLoading, setStatusLoading] = useState(true);
+  const [statusUpdating, setStatusUpdating] = useState(false);
+  const [statusError, setStatusError] = useState("");
   const { t } = useLanguage();
   const [capacity, setCapacity] = useState("120");
   const [rates, setRates] = useState(() => {
@@ -35,6 +39,53 @@ export default function SettingsPage() {
       return initialRates;
     }
   });
+
+  useEffect(() => {
+    let active = true;
+    const loadStatus = async () => {
+      try {
+        const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/daily-setup`, { cache: "no-store" });
+        if (!response.ok) throw new Error("मंडी की स्थिति लोड नहीं हो सकी।");
+        const record = await response.json() as TokenBoardState;
+        if (active) {
+          setIsOpen(true);
+          setStatusError("");
+        }
+      } catch (error) {
+        if (active) setStatusError(error instanceof Error ? error.message : "मंडी की स्थिति लोड नहीं हो सकी।");
+      } finally {
+        if (active) setStatusLoading(false);
+      }
+    };
+
+    void loadStatus();
+    const intervalId = window.setInterval(() => void loadStatus(), 3000);
+    return () => {
+      active = false;
+      window.clearInterval(intervalId);
+    };
+  }, []);
+
+  async function toggleMandiStatus() {
+    if (statusLoading || statusUpdating) return;
+    const nextStatus = !isOpen;
+    setStatusUpdating(true);
+    setStatusError("");
+    try {
+      const response = await fetch(`/api/mandis/${DEFAULT_MANDI_ID}/daily-setup`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mandiOpen: nextStatus }),
+      });
+      const result = await response.json() as TokenBoardState & { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "मंडी की स्थिति सेव नहीं हो सकी।");
+      setIsOpen(true);
+    } catch (error) {
+      setStatusError(error instanceof Error ? error.message : "मंडी की स्थिति सेव नहीं हो सकी।");
+    } finally {
+      setStatusUpdating(false);
+    }
+  }
 
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
@@ -78,23 +129,25 @@ export default function SettingsPage() {
             <h2 className="text-base font-black text-gray-900">{t("mandiStatus")}</h2>
             <p className="text-sm font-semibold text-gray-600">{isOpen ? t("mandiOpen") : t("mandiClosed")}</p>
           </div>
-       <button
-  type="button"
-  role="switch"
-  aria-checked={isOpen}
-  aria-label={t("toggleMandiStatus")}
-  onClick={() => setIsOpen((current) => !current)}
-  className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition-colors duration-200 ${
-    isOpen ? "bg-[var(--success)]" : "bg-gray-300"
-  }`}
->
-  <span
-    className={`h-6 w-6 rounded-full bg-white shadow-md ring-1 ring-black/5 transition-transform duration-200 ${
-      isOpen ? "translate-x-6" : "translate-x-0"
-    }`}
-  />
-</button>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={isOpen}
+            aria-label={t("toggleMandiStatus")}
+            onClick={() => void toggleMandiStatus()}
+            disabled
+            className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
+              isOpen ? "bg-[var(--success)]" : "bg-gray-300"
+            }`}
+          >
+            <span
+              className={`h-6 w-6 rounded-full bg-white shadow-md ring-1 ring-black/5 transition-transform duration-200 ${
+                isOpen ? "translate-x-6" : "translate-x-0"
+              }`}
+            />
+          </button>
         </section>
+        {statusError && <p role="alert" className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">{statusError}</p>}
 
         <section className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <label htmlFor="capacity" className="mb-2 block text-sm font-black text-gray-700">{t("totalCapacity")}</label>

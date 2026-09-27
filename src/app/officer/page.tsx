@@ -69,7 +69,7 @@ export default function OfficerPage() {
     };
 
     void refreshTokenState();
-    const intervalId = window.setInterval(() => void refreshTokenState(), 15000);
+    const intervalId = window.setInterval(() => void refreshTokenState(), 3000);
     return () => {
       active = false;
       window.clearInterval(intervalId);

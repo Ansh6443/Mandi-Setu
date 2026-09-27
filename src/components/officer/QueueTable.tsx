@@ -40,7 +40,7 @@ export default function QueueTable({ query }: { query: string }) {
     };
 
     void readDailyRecord();
-    const intervalId = window.setInterval(() => void readDailyRecord(), 15000);
+    const intervalId = window.setInterval(() => void readDailyRecord(), 3000);
     return () => {
       active = false;
       window.clearInterval(intervalId);

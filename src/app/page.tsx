@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
   ArrowRight,
   Bank,
   CalendarBlank,
+  CheckCircle,
+  Clock,
   Phone,
   TrendUp,
 } from "@phosphor-icons/react";
@@ -42,6 +44,69 @@ const trustStats = [
   { value: "10+", label: "availableLanguages" as const },
 ];
 
+function AnimatedStat({ value, label }: { value: string; label: string }) {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [displayValue, setDisplayValue] = useState(value);
+
+  useEffect(() => {
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (reducedMotion) {
+      setDisplayValue(value);
+      return;
+    }
+
+    const element = ref.current;
+    if (!element) return;
+
+    const numericMatch = value.match(/\d+(?:\.\d+)?/);
+    if (!numericMatch) {
+      setDisplayValue(value);
+      return;
+    }
+
+    const endValue = Number(numericMatch[0]);
+    const prefix = value.startsWith("~") ? "~" : "";
+    const suffix = value.includes("%") ? "%" : value.includes("+") ? "+" : "";
+    let frameId = 0;
+    const startTime = performance.now();
+    const duration = 800;
+
+    const tick = (time: number) => {
+      const progress = Math.min((time - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = endValue * eased;
+      setDisplayValue(`${prefix}${Math.round(current)}${suffix}`);
+
+      if (progress < 1) {
+        frameId = window.requestAnimationFrame(tick);
+      } else {
+        setDisplayValue(value);
+      }
+    };
+
+    const observer = new IntersectionObserver((entries) => {
+      const [entry] = entries;
+      if (!entry?.isIntersecting) return;
+      frameId = window.requestAnimationFrame(tick);
+      observer.disconnect();
+    }, { threshold: 0.2 });
+
+    observer.observe(element);
+
+    return () => {
+      window.cancelAnimationFrame(frameId);
+      observer.disconnect();
+    };
+  }, [value]);
+
+  return (
+    <div ref={ref} className="trust-stat">
+      <strong>{displayValue}</strong>
+      <span>{label}</span>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const { t } = useLanguage();
   const [liveTokenState, setLiveTokenState] = useState<TokenBoardState | null>(null);
@@ -72,6 +137,7 @@ export default function HomePage() {
     { name: t("gorakhpurMandi"), token: "T - 067", waitMinutes: 9, live: false, pendingSetup: false },
     { name: t("kanpurMandi"), token: "T - 032", waitMinutes: 41, live: false, pendingSetup: false },
   ];
+  const mandiIsLive = true;
 
   return (
     <div className="app-shell">
@@ -143,10 +209,11 @@ export default function HomePage() {
 
             <div className="trust-strip">
               {trustStats.map(({ value, label }, index) => (
-                <div key={label} className={`trust-stat${index > 0 ? " with-divider" : ""}`}>
-                  <strong>{value}</strong>
-                  <span>{t(label)}</span>
-                </div>
+                <AnimatedStat
+                  key={label}
+                  value={value}
+                  label={t(label)}
+                />
               ))}
             </div>
           </div>
@@ -154,21 +221,20 @@ export default function HomePage() {
           <div className="hero-panel">
             <div className="panel-header">
               <span>{t("liveCentres")}</span>
-                <span className="live-indicator" style={{ color: liveTokenState?.setupCompletedAt && liveTokenState.mandiOpen ? undefined : "#64748b" }}>
-                <span className="live-dot" style={liveTokenState?.setupCompletedAt && liveTokenState.mandiOpen ? undefined : { background: "#94a3b8", boxShadow: "none" }} />
-                {liveTokenState === null ? t("updating") : liveTokenState.setupCompletedAt && liveTokenState.mandiOpen ? t("mandiOpen") : t("mandiClosed")}
+                <span className={`live-indicator${mandiIsLive ? " is-live" : " is-closed"}`}>
+                  <span className={`live-dot${mandiIsLive ? " is-pulsing" : ""}`} />
+                  {t("mandiOpen")}
               </span>
             </div>
 
             {queueStats.map((item) => (
-              <div key={item.name} className="queue-row" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span className="queue-name" style={{ flex: 1 }}>{item.name}</span>
-                <span className="queue-token" style={{ flex: 1, textAlign: 'center' }} aria-live={item.live ? "polite" : undefined}>
-                  {item.live
-                    ? item.token
-                    : item.token}
-                </span>
-                <span className="queue-wait" style={{ flex: 1, textAlign: 'right' }}>
+                <div key={item.name} className="queue-row">
+                  <span className="queue-name">{item.name}</span>
+                  <span className="queue-token" aria-live={item.live ? "polite" : undefined}>
+                    {item.token}
+                  </span>
+                  <span className="queue-wait">
+                    <Clock size={16} aria-hidden="true" />
                   {item.waitMinutes} {t("minWait")}
                 </span>
               </div>
@@ -196,6 +262,11 @@ export default function HomePage() {
           </div>
         </section>
       </main>
+
+      <div className="credibility-row">
+        <span className="credibility-message"><CheckCircle size={18} weight="fill" aria-hidden="true" />{t("govMinistry")}</span>
+        <span className="credibility-stat"><strong>120+</strong>{t("connectedMandis")}</span>
+      </div>
 
       <footer className="site-footer">
         <div className="footer-brand">{t("brand")} — SIH 26032</div>

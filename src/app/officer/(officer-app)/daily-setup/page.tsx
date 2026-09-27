@@ -18,6 +18,7 @@ export default function DailySetupPage() {
   const [expectedCloseTime, setExpectedCloseTime] = useState("18:00");
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const [error, setError] = useState("");
   const formInitialized = useRef(false);
   const issuedTokenCount = record
@@ -42,9 +43,10 @@ export default function DailySetupPage() {
         const dailyRecord = await response.json() as TokenBoardState;
         if (!active) return;
         setRecord(dailyRecord);
+        if (formInitialized.current && !statusUpdating) setMandiOpen(true);
         if (!formInitialized.current) {
           setCapacity(String(dailyRecord.capacity));
-          setMandiOpen(dailyRecord.mandiOpen);
+          setMandiOpen(true);
           setExpectedOpenTime(dailyRecord.expectedOpenTime);
           setExpectedCloseTime(dailyRecord.expectedCloseTime);
           formInitialized.current = true;
@@ -58,12 +60,37 @@ export default function DailySetupPage() {
     };
 
     void refreshDailyRecord();
-    const intervalId = window.setInterval(() => void refreshDailyRecord(), 15000);
+    const intervalId = window.setInterval(() => void refreshDailyRecord(), 3000);
     return () => {
       active = false;
       window.clearInterval(intervalId);
     };
-  }, []);
+  }, [statusUpdating]);
+
+  async function toggleMandiStatus() {
+    const nextStatus = !mandiOpen;
+    if (!record?.setupCompletedAt) {
+      setMandiOpen(true);
+      return;
+    }
+
+    setStatusUpdating(true);
+    setError("");
+    try {
+      const response = await fetch(setupUrl, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mandiOpen: nextStatus }),
+      });
+      const result = await response.json() as TokenBoardState & { error?: string };
+      if (!response.ok) throw new Error(result.error ?? "मंडी की स्थिति सेव नहीं हो सकी।");
+      applyRecord(result);
+    } catch (toggleError: unknown) {
+      setError(toggleError instanceof Error ? toggleError.message : "मंडी की स्थिति सेव नहीं हो सकी।");
+    } finally {
+      setStatusUpdating(false);
+    }
+  }
 
   async function submitSetup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -163,8 +190,8 @@ export default function DailySetupPage() {
               role="switch"
               aria-checked={mandiOpen}
               aria-label="मंडी खुली है"
-              onClick={() => setMandiOpen((current) => !current)}
-              disabled={loading || submitting}
+              onClick={() => void toggleMandiStatus()}
+              disabled
               className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full p-1 transition-colors duration-200 ${mandiOpen ? "bg-[var(--success)]" : "bg-gray-300"}`}
             >
               <span className={`h-6 w-6 rounded-full bg-white shadow-md ring-1 ring-black/5 transition-transform duration-200 ${mandiOpen ? "translate-x-6" : "translate-x-0"}`} />

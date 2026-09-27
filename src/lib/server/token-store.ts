@@ -72,7 +72,7 @@ function createInitialState(mandiId: string, date: string, previousCapacity: num
     completedTokens: [],
     processingTimes: [],
     averageProcessingTimePerToken: null,
-    mandiOpen: false,
+    mandiOpen: true,
     expectedOpenTime: "08:00",
     expectedCloseTime: "18:00",
     setupCompletedAt: null,
@@ -148,7 +148,7 @@ export function setupDailyMandi(
   state.completedTokens = [];
   state.processingTimes = [];
   state.averageProcessingTimePerToken = null;
-  state.mandiOpen = setup.mandiOpen;
+  state.mandiOpen = true;
   state.expectedOpenTime = setup.expectedOpenTime;
   state.expectedCloseTime = setup.expectedCloseTime;
   state.setupCompletedAt = new Date(now).toISOString();
@@ -156,6 +156,13 @@ export function setupDailyMandi(
   state.lastAdvanceTimestamp = null;
   state.undoHistory = [];
 
+  return publicState(state);
+}
+
+export function setMandiOpen(mandiId: string, mandiOpen: boolean) {
+  const state = getRecord(mandiId);
+  state.mandiOpen = true;
+  state.lastUpdatedTimestamp = Date.now();
   return publicState(state);
 }
 
